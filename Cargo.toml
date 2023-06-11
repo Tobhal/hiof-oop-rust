@@ -1,8 +1,10 @@
 [package]
-name = "HIOF-oop-rust"
+name = "hiof-oop-rust"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+ratatui = { version = "0.21.0", default-features = false, features = ["all-widgets", "termion"]}
+termion = "2.0.1"

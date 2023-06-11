@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 use std::mem;
-use crate::center_star::CenterStar;
-use crate::planet::Planet;
-use crate::file_reader::read_lines;
-use crate::moon::Moon;
-use crate::planet_system_csv::PlanetSystemCSV;
+use crate::planet_system::{
+    center_star::CenterStar,
+    planet::Planet,
+    moon::Moon,
+    planet_system_csv::PlanetSystemCSV
+};
+use crate::util::file_reader::read_lines;
 
 pub enum Types {
     CenterStar(CenterStar),
@@ -35,6 +37,14 @@ pub struct PlanetSystem {
 }
 
 impl PlanetSystem {
+    pub fn new() -> PlanetSystem {
+        PlanetSystem {
+            name: "".to_string(),
+            center_star: CenterStar::new(),
+            planets: vec![],
+        }
+    }
+    
     pub fn new_system_from_file(file_name: String, name: String) -> PlanetSystem {
         let mut center_star: CenterStar = CenterStar::new();
         let mut planets: Vec<Planet> = vec![];

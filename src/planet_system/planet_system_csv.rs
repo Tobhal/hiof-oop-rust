@@ -1,4 +1,4 @@
-use crate::planet_system::Types;
+use crate::planet_system::planet_system::Types;
 
 #[allow(dead_code)]
 pub struct PlanetSystemCSV {

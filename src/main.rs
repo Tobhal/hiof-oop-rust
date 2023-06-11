@@ -1,14 +1,18 @@
-use crate::planet_system::PlanetSystem;
-
-mod planet;
-mod center_star;
-mod moon;
 mod planet_system;
-mod file_reader;
-mod planet_system_csv;
+mod app;
+mod util;
 
-fn main() {
+use std::error::Error;
+use std::time::Duration;
+use crate::planet_system::planet_system::PlanetSystem;
+use crate::app::termion::run;
+
+fn main() -> Result<(), Box<dyn Error>> {
     let planet_systems = PlanetSystem::new_system_from_file("solarSystem.csv".to_string(), "Solar system".to_string());
 
-    println!("{planet_systems:#?}")
+    // println!("{planet_systems:#?}");
+
+    run(Duration::from_millis(250), true, &planet_systems)?;
+
+    Ok(())
 }

@@ -1,4 +1,7 @@
-use crate::{app::App, ui};
+use crate::app::{
+    ui,
+    app::App
+};
 use ratatui::{
     backend::{Backend, TermionBackend},
     Terminal,
@@ -10,8 +13,9 @@ use termion::{
     raw::IntoRawMode,
     screen::IntoAlternateScreen,
 };
+use crate::planet_system::planet_system::PlanetSystem;
 
-pub fn run(tick_rate: Duration, enhanced_graphics: bool) -> Result<(), Box<dyn Error>> {
+pub fn run(tick_rate: Duration, enhanced_graphics: bool, planet_system: &PlanetSystem) -> Result<(), Box<dyn Error>> {
     // setup terminal
     let stdout = io::stdout()
         .into_raw_mode()
@@ -23,7 +27,8 @@ pub fn run(tick_rate: Duration, enhanced_graphics: bool) -> Result<(), Box<dyn E
     let mut terminal = Terminal::new(backend)?;
 
     // create app and run it
-    let app = App::new("Termion demo", enhanced_graphics);
+    let app = App::new("Planet system", enhanced_graphics, planet_system);
+
     run_app(&mut terminal, app, tick_rate)?;
 
     Ok(())

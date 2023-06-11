@@ -1,4 +1,4 @@
-use crate::moon::Moon;
+use crate::planet_system::moon::Moon;
 
 #[derive(Debug, Clone)]
 pub struct Planet {
