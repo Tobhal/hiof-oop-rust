@@ -7,6 +7,8 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Wrap, },
     Frame,
 };
+use ratatui::layout::Alignment;
+use ratatui::widgets::Clear;
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
@@ -40,20 +42,38 @@ fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
         B: Backend,
 {
+    let index = app.systems_list.state.selected().unwrap_or_default();
+
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(
             [
-                Constraint::Percentage(50),
-                Constraint::Percentage(50),
+                Constraint::Percentage(75),
+                Constraint::Percentage(25),
             ]
                 .as_ref(),
         )
         .split(area);
 
-    draw_list(f, app, chunks[0]);
+    let block = Block::default()
+        .title("Content")
+        .borders(Borders::ALL)
+        .style(Style::default().bg(Color::Blue));
+    f.render_widget(block, chunks[1]);
 
-    draw_text(f, chunks[1], app.tasks.state.selected().unwrap_or_default() as i16, app);
+    draw_list(f, app, chunks[0]);
+    draw_text(f, chunks[1], index as i16, app);
+
+    if app.show_popup {
+        let block = Block::default()
+            .title(format!("Edit {}", app.planet_systems[index].name.clone()))
+            .borders(Borders::ALL);
+
+        let popup_area = centered_rect(60, 20, f.size());
+
+        f.render_widget(Clear, popup_area); //this clears out the background
+        f.render_widget(block, popup_area);
+    }
 }
 
 fn draw_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
@@ -86,19 +106,16 @@ fn draw_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         )
         .highlight_symbol("> ");
 
-    f.render_stateful_widget(tasks, chunks[0], &mut app.tasks.state);
+    f.render_stateful_widget(tasks, chunks[0], &mut app.systems_list.state);
 }
 
 fn draw_text<B>(f: &mut Frame<B>, area: Rect, index: i16, app: &mut App)
     where
         B: Backend,
 {
-    // let planet = app.planet_systems.planets[index as usize].clone();
-    // let mut moons: String = String::new();
-
     let planet_system = app.planet_systems[index as usize].clone();
 
-    let text = vec![
+    let mut text = vec![
         // Line::from(index.to_string()),
         Line::from(planet_system.clone().name),
         Line::from(vec![
@@ -106,10 +123,12 @@ fn draw_text<B>(f: &mut Frame<B>, area: Rect, index: i16, app: &mut App)
             Span::from(planet_system.center_star.name.clone().to_string())
         ]),
         Line::from(vec![
-            Span::from("- Num planets: "),
-            Span::from(planet_system.planets.len().to_string())
-        ])
+            Span::from(format!("- Num planets ({}): ", planet_system.planets.len().to_string())),
+        ]),
     ];
+
+    planet_system.planets.iter()
+        .for_each(|p| text.push(Line::from(format!("- - {}", p.name.clone()))));
 
     let block = Block::default()
         .borders(Borders::ALL)
@@ -125,4 +144,32 @@ fn draw_text<B>(f: &mut Frame<B>, area: Rect, index: i16, app: &mut App)
         });
 
     f.render_widget(paragraph, area);
+}
+
+
+/// helper function to create a centered rect using up certain percentage of the available rect `r`
+fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Percentage((100 - percent_y) / 2),
+                Constraint::Percentage(percent_y),
+                Constraint::Percentage((100 - percent_y) / 2),
+            ]
+                .as_ref(),
+        )
+        .split(r);
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(
+            [
+                Constraint::Percentage((100 - percent_x) / 2),
+                Constraint::Percentage(percent_x),
+                Constraint::Percentage((100 - percent_x) / 2),
+            ]
+                .as_ref(),
+        )
+        .split(popup_layout[1])[1]
 }

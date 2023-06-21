@@ -25,13 +25,13 @@ impl<'a> TabsState<'a> {
     }
 }
 
-pub struct StatefulList<'l> {
+pub struct StatefulList<'l, T> {
     pub state: ListState,
-    pub items: &'l Vec<PlanetSystem>,
+    pub items: &'l Vec<T>,
 }
 
-impl<'l> StatefulList<'l> {
-    pub fn with_items(items: &Vec<PlanetSystem>) -> StatefulList {
+impl<'l, T> StatefulList<'l, T> {
+    pub fn with_items(items: &Vec<T>) -> StatefulList<T> {
         StatefulList {
             state: ListState::default(),
             items,
@@ -61,13 +61,23 @@ impl<'l> StatefulList<'l> {
     }
 }
 
+impl<'l, PlanetSystem> StatefulList<'l, PlanetSystem> {
+    pub fn with_planet_systems(items: &Vec<PlanetSystem>) -> StatefulList<PlanetSystem> {
+        StatefulList {
+            state: ListState::default(),
+            items,
+        }
+    }
+}
+
 pub struct App<'a> {
     pub title: &'a str,
     pub should_quit: bool,
     pub tabs: TabsState<'a>,
-    pub tasks: StatefulList<'a>,
+    pub systems_list: StatefulList<'a, PlanetSystem>,
     pub planet_systems: &'a Vec<PlanetSystem>,
     pub enhanced_graphics: bool,
+    pub show_popup: bool
 }
 
 impl<'a> App<'a> {
@@ -76,18 +86,19 @@ impl<'a> App<'a> {
             title,
             should_quit: false,
             tabs: TabsState::new(vec!["Planets"]),
-            tasks: StatefulList::with_items(planet_systems),
+            systems_list: StatefulList::with_items(planet_systems),
             planet_systems,
             enhanced_graphics,
+            show_popup: false
         }
     }
 
     pub fn on_up(&mut self) {
-        self.tasks.previous();
+        self.systems_list.previous();
     }
 
     pub fn on_down(&mut self) {
-        self.tasks.next();
+        self.systems_list.next();
     }
 
     pub fn on_right(&mut self) {
@@ -100,9 +111,9 @@ impl<'a> App<'a> {
 
     pub fn on_key(&mut self, c: char) {
         match c {
-            'q' => {
-                self.should_quit = true;
-            }
+            'q' => { self.should_quit = true; }
+            'p' => { self.show_popup = !self.show_popup }
+            '\n' => { self.show_popup = !self.show_popup }
             _ => {}
         }
     }
