@@ -1,19 +1,13 @@
-use crate::planet_system::planet_system::Types;
+use crate::planet_system::center_star::CenterStar;
+use crate::planet_system::planet::Planet;
 
-#[allow(dead_code)]
-pub struct PlanetSystemCSV {
-    pub(crate) name: String,
-    pub(crate) mass: f32,
-    pub(crate) radius: f32,
-    pub(crate) semi_major_axis: f32,
-    pub(crate) eccentricity: f32,
-    pub(crate) orbital_period: u32,
-    pub(crate) central_celestial_body: String,
-    pub(crate) effective_temperature: u16,
-    pub(crate) t: Types
+pub struct PlanetSystemsCSV {
+    pub name: String,
+    pub center_star: CenterStar,
+    pub planet: Planet
 }
 
-impl TryFrom<String> for PlanetSystemCSV {
+impl TryFrom<String> for PlanetSystemsCSV {
     type Error = &'static str;
 
     fn try_from(line: String) -> Result<Self, Self::Error> {
@@ -21,27 +15,30 @@ impl TryFrom<String> for PlanetSystemCSV {
             .map(|x| x.to_string())
             .collect();
 
-        let name: String = line_split[0].to_string();
-
-        if line_split.len() == 9 {
+        if line_split.len() == 14 {
             Ok(
-                PlanetSystemCSV {
-                    name,
-                    mass: line_split[1].parse::<f32>().unwrap_or_default(),
-                    radius: line_split[2].parse::<f32>().unwrap_or_default(),
-                    semi_major_axis: line_split[3].parse::<f32>().unwrap_or_default(),
-                    eccentricity: line_split[4].parse::<f32>().unwrap_or_default(),
-                    orbital_period: line_split[5].parse::<u32>().unwrap_or_default(),
-                    central_celestial_body: line_split[6].to_string(),
-                    //t: Types::from(line_split[7].to_string()),
-                    effective_temperature: line_split[8].parse::<u16>().unwrap_or_default(),
-                    t: Types::from(line_split),
+                PlanetSystemsCSV {
+                    name: line_split[0].to_string(),
+                    center_star: CenterStar {
+                        name: line_split[2].to_string(),
+                        mass: line_split[3].parse::<f32>().unwrap(),
+                        radius: line_split[4].parse::<f32>().unwrap(),
+                        effective_temperature: line_split[5].parse::<f32>().unwrap(),
+                    },
+                    planet: Planet {
+                        name: line_split[7].to_string(),
+                        mass: line_split[8].parse::<f32>().unwrap(),
+                        radius: line_split[9].parse::<f32>().unwrap(),
+                        semi_major_axis: line_split[10].parse::<f32>().unwrap(),
+                        eccentricity: line_split[11].parse::<f32>().unwrap(),
+                        orbital_period: line_split[12].parse::<f32>().unwrap(),
+                        moons: vec![],
+                    },
                 }
             )
         } else {
             println!("{line_split:?}");
             Err("Wrong size for input string. Size should be 9 after splitting on ','.")
         }
-
     }
 }
