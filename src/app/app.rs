@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use ratatui::widgets::ListState;
 use crate::planet_system::planet::Planet;
 use crate::planet_system::planet_system::PlanetSystem;
@@ -24,13 +25,13 @@ impl<'a> TabsState<'a> {
     }
 }
 
-pub struct StatefulList<T> {
+pub struct StatefulList<'l> {
     pub state: ListState,
-    pub items: Vec<T>,
+    pub items: &'l Vec<PlanetSystem>,
 }
 
-impl<T> StatefulList<T> {
-    pub fn with_items(items: Vec<T>) -> StatefulList<T> {
+impl<'l> StatefulList<'l> {
+    pub fn with_items(items: &Vec<PlanetSystem>) -> StatefulList {
         StatefulList {
             state: ListState::default(),
             items,
@@ -39,13 +40,7 @@ impl<T> StatefulList<T> {
 
     pub fn next(&mut self) {
         let i = match self.state.selected() {
-            Some(i) => {
-                if i >= self.items.len() - 1 {
-                    0
-                } else {
-                    i + 1
-                }
-            }
+            Some(i) => (i + 1) % self.items.len(),
             None => 0,
         };
         self.state.select(Some(i));
@@ -70,19 +65,19 @@ pub struct App<'a> {
     pub title: &'a str,
     pub should_quit: bool,
     pub tabs: TabsState<'a>,
-    pub tasks: StatefulList<Planet>,
-    pub planet_system: &'a PlanetSystem,
+    pub tasks: StatefulList<'a>,
+    pub planet_systems: &'a Vec<PlanetSystem>,
     pub enhanced_graphics: bool,
 }
 
 impl<'a> App<'a> {
-    pub fn new(title: &'a str, enhanced_graphics: bool, planet_system: &'a PlanetSystem) -> App<'a> {
+    pub fn new(title: &'a str, enhanced_graphics: bool, planet_systems: &'a Vec<PlanetSystem>) -> App<'a> {
         App {
             title,
             should_quit: false,
             tabs: TabsState::new(vec!["Planets"]),
-            tasks: StatefulList::with_items(planet_system.planets.to_vec()),
-            planet_system,
+            tasks: StatefulList::with_items(planet_systems),
+            planet_systems,
             enhanced_graphics,
         }
     }

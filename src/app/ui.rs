@@ -1,24 +1,10 @@
 use crate::app::app::App;
 use ratatui::{
     backend::Backend,
-    layout::{
-        Constraint,
-        Direction,
-        Layout,
-        Rect
-    },
-    style::{
-        Color,
-        Modifier,
-        Style
-    },
-    text::{
-        Line,
-        Span
-    },
-    widgets::{
-        Block, Borders, List, ListItem, Paragraph, Tabs, Wrap,
-    },
+    layout::{Constraint, Direction, Layout, Rect},
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Wrap, },
     Frame,
 };
 
@@ -79,13 +65,13 @@ fn draw_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         .direction(Direction::Horizontal)
         .split(area);
 
-    let mut planet_names: Vec<String> = vec![];
+    let mut planet_system_names: Vec<String> = vec![];
 
-    app.planet_system.planets.iter()
-        .for_each(|p| planet_names.push(p.name.clone()));
+    app.planet_systems.iter()
+        .for_each(|s| planet_system_names.push(s.name.clone()));
 
     // Draw tasks
-    let tasks: Vec<ListItem> = planet_names
+    let tasks: Vec<ListItem> = planet_system_names
         .iter()
         .map(|p| ListItem::new(vec![Line::from(Span::raw(p))]))
         .collect();
@@ -93,7 +79,7 @@ fn draw_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     let tasks = List::new(tasks)
         .block(Block::default()
             .borders(Borders::ALL)
-            .title("Planets")
+            .title("Systems")
         )
         .highlight_style(Style::default()
             .add_modifier(Modifier::BOLD)
@@ -107,52 +93,29 @@ fn draw_text<B>(f: &mut Frame<B>, area: Rect, index: i16, app: &mut App)
     where
         B: Backend,
 {
-    let planet = app.planet_system.planets[index as usize].clone();
-    let mut moons: String = String::new();
+    // let planet = app.planet_systems.planets[index as usize].clone();
+    // let mut moons: String = String::new();
 
-    planet.moons.iter().for_each(|m| {
-        moons.push_str(&*m.name);
-        moons.push_str(", ");
-    });
+    let planet_system = app.planet_systems[index as usize].clone();
 
     let text = vec![
         // Line::from(index.to_string()),
-        Line::from(planet.clone().name),
+        Line::from(planet_system.clone().name),
         Line::from(vec![
-            Span::from("- Mass: "),
-            Span::from(format!("{:e}", planet.mass))
+            Span::from("- Center star: "),
+            Span::from(planet_system.center_star.name.clone().to_string())
         ]),
         Line::from(vec![
-            Span::from("- Radius: "),
-            Span::from(planet.clone().radius.to_string())
-        ]),
-        Line::from(vec![
-            Span::from("- Semi major axis: "),
-            Span::from(planet.clone().semi_major_axis.to_string())
-        ]),
-        Line::from(vec![
-            Span::from("- Eccentricity: "),
-            Span::from(planet.clone().eccentricity.to_string())
-        ]),
-        Line::from(vec![
-            Span::from("- Orbital period: "),
-            Span::from(planet.clone().orbital_period.to_string())
-        ]),
-        Line::from(vec![
-            Span::from("- moons "),
-            Span::from(planet.moons.len().to_string()),
-            Span::from(": "),
-            Span::from(moons)
-        ]),
+            Span::from("- Num planets: "),
+            Span::from(planet_system.planets.len().to_string())
+        ])
     ];
 
     let block = Block::default()
         .borders(Borders::ALL)
         .title(Span::styled(
-        "Planet info",
+        "System info",
         Style::default()
-            .fg(Color::Magenta)
-            .add_modifier(Modifier::BOLD),
     ));
 
     let paragraph = Paragraph::new(text)

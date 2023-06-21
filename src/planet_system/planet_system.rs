@@ -30,7 +30,7 @@ impl From<Vec<String>> for Types {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PlanetSystem {
     pub name: String,
     pub center_star: CenterStar,
@@ -89,7 +89,7 @@ impl PlanetSystem {
     }
      */
 
-    pub fn new_systems_from_file(file_name: String) -> Arc<[PlanetSystem]> {
+    pub fn new_systems_from_file(file_name: String) -> Vec<PlanetSystem> {
         let mut planets: HashMap<String, Vec<Planet>> = HashMap::new();
         let mut stars: HashMap<String, CenterStar> = HashMap::new();
 
@@ -127,7 +127,7 @@ impl PlanetSystem {
 
             });
 
-        planet_systems.into()
+        planet_systems
     }
 }
 
