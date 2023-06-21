@@ -19,7 +19,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .tabs
         .titles
         .iter()
-        .map(|t| Line::from(Span::styled(*t, Style::default().fg(Color::Green))))
+        .map(|t| Line::from(Span::styled(*t, Style::default())))
         .collect();
 
     let tabs = Tabs::new(titles)
@@ -27,7 +27,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
             .borders(Borders::ALL)
             .title(app.title))
         .highlight_style(Style::default()
-            .fg(Color::Yellow))
+            .add_modifier(Modifier::BOLD))
         .select(app.tabs.index);
 
     f.render_widget(tabs, chunks[0]);
@@ -58,11 +58,12 @@ fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     let block = Block::default()
         .title("Content")
         .borders(Borders::ALL)
-        .style(Style::default().bg(Color::Blue));
+        .style(Style::default());
+
     f.render_widget(block, chunks[1]);
 
     draw_list(f, app, chunks[0]);
-    draw_text(f, chunks[1], index as i16, app);
+    draw_planet_system_info(f, app, chunks[1], index);
 
     if app.show_popup {
         let block = Block::default()
@@ -73,6 +74,8 @@ fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
 
         f.render_widget(Clear, popup_area); //this clears out the background
         f.render_widget(block, popup_area);
+
+        draw_edit_list(f, app, popup_area)
     }
 }
 
@@ -109,11 +112,44 @@ fn draw_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     f.render_stateful_widget(tasks, chunks[0], &mut app.systems_list.state);
 }
 
-fn draw_text<B>(f: &mut Frame<B>, area: Rect, index: i16, app: &mut App)
+fn draw_edit_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
         B: Backend,
 {
-    let planet_system = app.planet_systems[index as usize].clone();
+    let mut planet_system_names: Vec<String> = vec![];
+
+    app.planet_systems.iter()
+        .for_each(|s| planet_system_names.push(s.name.clone()));
+
+    // Draw tasks
+    let mut tasks: Vec<ListItem> = planet_system_names
+        .iter()
+        .map(|p| ListItem::new(vec![Line::from(Span::raw(p))]))
+        .collect();
+
+    tasks = vec![
+        ListItem::new(vec![Line::from("Test 1")]),
+        ListItem::new(vec![Line::from("Test 2")]),
+    ];
+
+    let tasks = List::new(tasks)
+        .block(Block::default()
+            .borders(Borders::ALL)
+            .title("Edit")
+        )
+        .highlight_style(Style::default()
+            .add_modifier(Modifier::BOLD)
+        )
+        .highlight_symbol("> ");
+
+    f.render_stateful_widget(tasks, area, &mut app.system_edit_list.state);
+}
+
+fn draw_planet_system_info<B>(f: &mut Frame<B>, app: &mut App, area: Rect, index: usize)
+    where
+        B: Backend,
+{
+    let planet_system = app.planet_systems[index].clone();
 
     let mut text = vec![
         // Line::from(index.to_string()),
@@ -145,6 +181,7 @@ fn draw_text<B>(f: &mut Frame<B>, area: Rect, index: i16, app: &mut App)
 
     f.render_widget(paragraph, area);
 }
+
 
 
 /// helper function to create a centered rect using up certain percentage of the available rect `r`

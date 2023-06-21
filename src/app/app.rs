@@ -46,6 +46,14 @@ impl<'l, T> StatefulList<'l, T> {
         self.state.select(Some(i));
     }
 
+    pub fn next_size(&mut self, size: usize) {
+        let i = match self.state.selected() {
+            Some(i) => (i + 1) % size,
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
     pub fn previous(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
@@ -59,15 +67,21 @@ impl<'l, T> StatefulList<'l, T> {
         };
         self.state.select(Some(i));
     }
-}
 
-impl<'l, PlanetSystem> StatefulList<'l, PlanetSystem> {
-    pub fn with_planet_systems(items: &Vec<PlanetSystem>) -> StatefulList<PlanetSystem> {
-        StatefulList {
-            state: ListState::default(),
-            items,
-        }
+    pub fn previous_size(&mut self, size: usize) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    size - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
     }
+
 }
 
 pub struct App<'a> {
@@ -75,6 +89,7 @@ pub struct App<'a> {
     pub should_quit: bool,
     pub tabs: TabsState<'a>,
     pub systems_list: StatefulList<'a, PlanetSystem>,
+    pub system_edit_list: StatefulList<'a, PlanetSystem>,
     pub planet_systems: &'a Vec<PlanetSystem>,
     pub enhanced_graphics: bool,
     pub show_popup: bool
@@ -87,6 +102,7 @@ impl<'a> App<'a> {
             should_quit: false,
             tabs: TabsState::new(vec!["Planets"]),
             systems_list: StatefulList::with_items(planet_systems),
+            system_edit_list: StatefulList::with_items(planet_systems),
             planet_systems,
             enhanced_graphics,
             show_popup: false
@@ -94,11 +110,19 @@ impl<'a> App<'a> {
     }
 
     pub fn on_up(&mut self) {
-        self.systems_list.previous();
+        if self.show_popup {
+            self.system_edit_list.previous_size(2);
+        } else {
+            self.systems_list.previous();
+        }
     }
 
     pub fn on_down(&mut self) {
-        self.systems_list.next();
+        if self.show_popup {
+            self.system_edit_list.next_size(2);
+        } else {
+            self.systems_list.next();
+        }
     }
 
     pub fn on_right(&mut self) {
