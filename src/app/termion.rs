@@ -16,7 +16,7 @@ use termion::{
 };
 use crate::planet_system::planet_system::PlanetSystem;
 
-pub fn run(tick_rate: Duration, enhanced_graphics: bool, planet_system: &Vec<PlanetSystem>) -> Result<(), Box<dyn Error>> {
+pub fn run(tick_rate: Duration, enhanced_graphics: bool, planet_system: &mut Vec<PlanetSystem>) -> Result<(), Box<dyn Error>> {
     // setup terminal
     let stdout = io::stdout()
         .into_raw_mode()

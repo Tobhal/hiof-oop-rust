@@ -1,7 +1,9 @@
-use std::sync::Arc;
 use ratatui::widgets::ListState;
-use crate::planet_system::planet::Planet;
 use crate::planet_system::planet_system::PlanetSystem;
+
+use std::{thread, time};
+use std::thread::sleep;
+use std::time::Duration;
 
 pub struct TabsState<'a> {
     pub titles: Vec<&'a str>,
@@ -84,28 +86,55 @@ impl<'l, T> StatefulList<'l, T> {
 
 }
 
+#[derive(Debug)]
+pub enum InputMode {
+    Normal,
+    Editing
+}
+
+#[derive(Debug, PartialEq)]
+pub enum PopupMode {
+    Hide,
+    Show,
+}
+
 pub struct App<'a> {
     pub title: &'a str,
     pub should_quit: bool,
     pub tabs: TabsState<'a>,
     pub systems_list: StatefulList<'a, PlanetSystem>,
-    pub system_edit_list: StatefulList<'a, PlanetSystem>,
-    pub planet_systems: &'a Vec<PlanetSystem>,
+    pub planet_systems: &'a mut Vec<PlanetSystem>,
     pub enhanced_graphics: bool,
-    pub show_popup: bool
+
+    pub input_mode: InputMode,
+    pub input: String,
+    pub messages: Vec<String>,
+
+    pub show_popup: bool,
+
+    pub system_edit_list: StatefulList<'a, PlanetSystem>,
+    pub system_edit: Option<&'a PlanetSystem>,
 }
 
 impl<'a> App<'a> {
-    pub fn new(title: &'a str, enhanced_graphics: bool, planet_systems: &'a Vec<PlanetSystem>) -> App<'a> {
+    pub fn new(title: &'a str, enhanced_graphics: bool, planet_systems: &'a mut Vec<PlanetSystem>) -> App<'a> {
+        let planet_system_names: Vec<String> = planet_systems.iter().map(|p| p.name.clone()).collect();
+
         App {
             title,
             should_quit: false,
             tabs: TabsState::new(vec!["Planets"]),
-            systems_list: StatefulList::with_items(planet_systems),
-            system_edit_list: StatefulList::with_items(planet_systems),
+            systems_list: StatefulList::with_items(planet_system_names),
             planet_systems,
             enhanced_graphics,
-            show_popup: false
+            input_mode: InputMode::Normal,
+            input: String::new(),
+            messages: Vec::new(),
+
+            show_popup: false,
+
+            system_edit_list: StatefulList::with_items(planet_system_names),
+            system_edit: None,
         }
     }
 
@@ -134,11 +163,51 @@ impl<'a> App<'a> {
     }
 
     pub fn on_key(&mut self, c: char) {
-        match c {
-            'q' => { self.should_quit = true; }
-            'p' => { self.show_popup = !self.show_popup }
-            '\n' => { self.show_popup = !self.show_popup }
-            _ => {}
+        match self.input_mode {
+            InputMode::Normal => {
+                match c {
+                    'q' => { self.should_quit = true; }
+                    'p' => { self.show_popup = !self.show_popup }
+                    '\n' => {
+                        if self.show_popup {
+                            self.input_mode = InputMode::Editing;
+                        } else {
+                            self.show_popup = !self.show_popup;
+
+                            let index = self.systems_list.state.selected().unwrap_or_default();
+
+                            self.system_edit = Some(&self.planet_systems[index])
+                        }
+
+                    }
+                    _ => {}
+                }
+            }
+            InputMode::Editing => {
+                match c {
+                    '\n' => {
+                        // Push edited line to the current editing line
+                        let message = self.input.drain(..).collect();
+                        // self.messages.push(self.input.drain(..).collect());
+
+                        let system_index = self.systems_list.state.selected().unwrap_or_default();
+                        let edit_index = self.system_edit_list.state.selected().unwrap_or_default();
+
+                        if edit_index == 0 {
+                            self.planet_systems[system_index].name = message;
+                        } else if edit_index == 1 {
+                            self.planet_systems[system_index].center_star.name = message;
+                        }
+
+                        self.input_mode = InputMode::Normal;
+                    },
+                    '\r' | '\u{0008}' | '.' => {
+                        self.input.pop();
+                    }
+                    '\u{001B}' | '\'' => self.input_mode = InputMode::Normal,
+                    c => self.input.push(c)
+                }
+            }
         }
     }
 
