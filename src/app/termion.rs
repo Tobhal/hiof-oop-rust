@@ -16,7 +16,7 @@ use termion::{
 };
 use crate::planet_system::planet_system::PlanetSystem;
 
-pub fn run(tick_rate: Duration, enhanced_graphics: bool, planet_system: &mut Vec<PlanetSystem>) -> Result<(), Box<dyn Error>> {
+pub fn run(tick_rate: Duration, enhanced_graphics: bool, planet_system: Vec<PlanetSystem>) -> Result<(), Box<dyn Error>> {
     // setup terminal
     let stdout = io::stdout()
         .into_raw_mode()
@@ -27,8 +27,11 @@ pub fn run(tick_rate: Duration, enhanced_graphics: bool, planet_system: &mut Vec
     let backend = TermionBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
+
+    let planet_system_names: Vec<String> = planet_system.iter().map(|p| p.name.clone()).collect();
+
     // create app and run it
-    let app = App::new("Planet system", enhanced_graphics, planet_system);
+    let app = App::new("Planet system", enhanced_graphics, planet_system, &planet_system_names);
 
     run_app(&mut terminal, app, tick_rate)?;
 

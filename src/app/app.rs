@@ -102,8 +102,8 @@ pub struct App<'a> {
     pub title: &'a str,
     pub should_quit: bool,
     pub tabs: TabsState<'a>,
-    pub systems_list: StatefulList<'a, PlanetSystem>,
-    pub planet_systems: &'a mut Vec<PlanetSystem>,
+    pub systems_list: StatefulList<'a, String>,
+    pub planet_systems: Vec<PlanetSystem>,
     pub enhanced_graphics: bool,
 
     pub input_mode: InputMode,
@@ -112,14 +112,12 @@ pub struct App<'a> {
 
     pub show_popup: bool,
 
-    pub system_edit_list: StatefulList<'a, PlanetSystem>,
-    pub system_edit: Option<&'a PlanetSystem>,
+    pub system_edit_list: StatefulList<'a, String>,
+    pub system_edit: Option<PlanetSystem>,
 }
 
 impl<'a> App<'a> {
-    pub fn new(title: &'a str, enhanced_graphics: bool, planet_systems: &'a mut Vec<PlanetSystem>) -> App<'a> {
-        let planet_system_names: Vec<String> = planet_systems.iter().map(|p| p.name.clone()).collect();
-
+    pub fn new(title: &'a str, enhanced_graphics: bool, planet_systems: Vec<PlanetSystem>, planet_system_names: &'a Vec<String>) -> App<'a> {
         App {
             title,
             should_quit: false,
@@ -169,14 +167,13 @@ impl<'a> App<'a> {
                     'q' => { self.should_quit = true; }
                     'p' => { self.show_popup = !self.show_popup }
                     '\n' => {
+                        let index = self.systems_list.state.selected().unwrap_or_default();
+
                         if self.show_popup {
                             self.input_mode = InputMode::Editing;
                         } else {
                             self.show_popup = !self.show_popup;
-
-                            let index = self.systems_list.state.selected().unwrap_or_default();
-
-                            self.system_edit = Some(&self.planet_systems[index])
+                            self.system_edit = Some(self.planet_systems[index].clone())
                         }
 
                     }
