@@ -30,6 +30,7 @@ impl<'a> TabsState<'a> {
 pub struct StatefulList<'l, T> {
     pub state: ListState,
     pub items: &'l Vec<T>,
+    pub size: usize,
 }
 
 impl<'l, T> StatefulList<'l, T> {
@@ -37,6 +38,7 @@ impl<'l, T> StatefulList<'l, T> {
         StatefulList {
             state: ListState::default(),
             items,
+            size: 0
         }
     }
 
@@ -48,9 +50,9 @@ impl<'l, T> StatefulList<'l, T> {
         self.state.select(Some(i));
     }
 
-    pub fn next_size(&mut self, size: usize) {
+    pub fn next_size(&mut self) {
         let i = match self.state.selected() {
-            Some(i) => (i + 1) % size,
+            Some(i) => (i + 1) % self.size,
             None => 0,
         };
         self.state.select(Some(i));
@@ -70,11 +72,11 @@ impl<'l, T> StatefulList<'l, T> {
         self.state.select(Some(i));
     }
 
-    pub fn previous_size(&mut self, size: usize) {
+    pub fn previous_size(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
                 if i == 0 {
-                    size - 1
+                    self.size - 1
                 } else {
                     i - 1
                 }
@@ -138,7 +140,7 @@ impl<'a> App<'a> {
 
     pub fn on_up(&mut self) {
         if self.show_popup {
-            self.system_edit_list.previous_size(2);
+            self.system_edit_list.previous_size();
         } else {
             self.systems_list.previous();
         }
@@ -146,7 +148,7 @@ impl<'a> App<'a> {
 
     pub fn on_down(&mut self) {
         if self.show_popup {
-            self.system_edit_list.next_size(2);
+            self.system_edit_list.next_size();
         } else {
             self.systems_list.next();
         }
@@ -189,12 +191,20 @@ impl<'a> App<'a> {
                         let system_index = self.systems_list.state.selected().unwrap_or_default();
                         let edit_index = self.system_edit_list.state.selected().unwrap_or_default();
 
-                        if edit_index == 0 {
-                            self.planet_systems[system_index].name = message.clone();
-                            self.system_edit.as_mut().unwrap().name = message.clone();
-                        } else if edit_index == 1 {
-                            self.planet_systems[system_index].center_star.name = message.clone();
-                            self.system_edit.as_mut().unwrap().center_star.name = message.clone();
+                        match edit_index {
+                            0 => {
+                                self.planet_systems[system_index].name = message.clone();
+                                self.system_edit.as_mut().unwrap().name = message.clone();
+                            },
+                            1 => {
+                                self.planet_systems[system_index].center_star.name = message.clone();
+                                self.system_edit.as_mut().unwrap().center_star.name = message.clone();
+                            },
+                            2..=100 => {
+                                self.planet_systems[system_index].planets[edit_index-2].name = message.clone();
+                                self.system_edit.as_mut().unwrap().planets[edit_index-2].name = message.clone();
+                            }
+                            _ => {}
                         }
 
                         self.input_mode = InputMode::Normal;

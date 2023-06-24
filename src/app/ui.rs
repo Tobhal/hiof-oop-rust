@@ -205,6 +205,18 @@ fn draw_edit_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         ),
     ];
 
+    app.system_edit.as_ref().unwrap().planets
+        .iter()
+        .for_each(|p| tasks.push(ListItem::new(
+            vec![
+                Line::from(
+                    format!("Planet: {}", p.name)
+                )
+            ]
+        )));
+
+    app.system_edit_list.size = tasks.len();
+
     let tasks = List::new(tasks)
         .block(Block::default())
         .highlight_style(Style::default()
