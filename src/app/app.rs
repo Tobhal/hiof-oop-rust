@@ -175,7 +175,6 @@ impl<'a> App<'a> {
                             self.show_popup = !self.show_popup;
                             self.system_edit = Some(self.planet_systems[index].clone())
                         }
-
                     }
                     _ => {}
                 }
@@ -184,16 +183,18 @@ impl<'a> App<'a> {
                 match c {
                     '\n' => {
                         // Push edited line to the current editing line
-                        let message = self.input.drain(..).collect();
+                        let message: String = self.input.drain(..).collect();
                         // self.messages.push(self.input.drain(..).collect());
 
                         let system_index = self.systems_list.state.selected().unwrap_or_default();
                         let edit_index = self.system_edit_list.state.selected().unwrap_or_default();
 
                         if edit_index == 0 {
-                            self.planet_systems[system_index].name = message;
+                            self.planet_systems[system_index].name = message.clone();
+                            self.system_edit.as_mut().unwrap().name = message.clone();
                         } else if edit_index == 1 {
-                            self.planet_systems[system_index].center_star.name = message;
+                            self.planet_systems[system_index].center_star.name = message.clone();
+                            self.system_edit.as_mut().unwrap().center_star.name = message.clone();
                         }
 
                         self.input_mode = InputMode::Normal;

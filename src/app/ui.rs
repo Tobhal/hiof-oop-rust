@@ -192,14 +192,14 @@ fn draw_edit_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         ListItem::new(
             vec![
                 Line::from(
-                    format!("{}", app.system_edit.as_ref().unwrap().name.clone().to_string())
+                    format!("Name: {}", app.system_edit.as_ref().unwrap().name.to_string())
                 )
             ]
         ),
         ListItem::new(
             vec![
                 Line::from(
-                    format!("{}", app.system_edit.as_ref().unwrap().center_star.name.clone().to_string())
+                    format!("Center star name: {}", app.system_edit.as_ref().unwrap().center_star.name.to_string())
                 )
             ]
         ),
