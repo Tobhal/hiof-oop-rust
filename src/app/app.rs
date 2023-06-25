@@ -97,7 +97,9 @@ pub enum InputMode {
 #[derive(Debug, PartialEq)]
 pub enum PopupMode {
     Hide,
-    Show,
+    PlanetSystem,
+    CenterStar,
+    Planet,
 }
 
 pub struct App<'a> {
@@ -112,7 +114,7 @@ pub struct App<'a> {
     pub input: String,
     pub messages: Vec<String>,
 
-    pub show_popup: bool,
+    pub popup_state: PopupMode,
 
     pub system_edit_list: StatefulList<'a, String>,
     pub system_edit: Option<PlanetSystem>,
@@ -131,7 +133,7 @@ impl<'a> App<'a> {
             input: String::new(),
             messages: Vec::new(),
 
-            show_popup: false,
+            popup_state: PopupMode::Hide,
 
             system_edit_list: StatefulList::with_items(planet_system_names),
             system_edit: None,
@@ -139,18 +141,28 @@ impl<'a> App<'a> {
     }
 
     pub fn on_up(&mut self) {
-        if self.show_popup {
-            self.system_edit_list.previous_size();
-        } else {
-            self.systems_list.previous();
+        match self.popup_state {
+            PopupMode::Hide => {
+                self.systems_list.previous();
+            }
+            PopupMode::PlanetSystem => {
+                self.system_edit_list.previous_size();
+            }
+            PopupMode::CenterStar => {}
+            PopupMode::Planet => {}
         }
     }
 
     pub fn on_down(&mut self) {
-        if self.show_popup {
-            self.system_edit_list.next_size();
-        } else {
-            self.systems_list.next();
+        match self.popup_state {
+            PopupMode::Hide => {
+                self.systems_list.next();
+            }
+            PopupMode::PlanetSystem => {
+                self.system_edit_list.next_size();
+            }
+            PopupMode::CenterStar => {}
+            PopupMode::Planet => {}
         }
     }
 
@@ -167,15 +179,26 @@ impl<'a> App<'a> {
             InputMode::Normal => {
                 match c {
                     'q' => { self.should_quit = true; }
-                    'p' => { self.show_popup = !self.show_popup }
+                    'p' => {
+                        self.popup_state = match self.popup_state {
+                            PopupMode::Hide => PopupMode::Hide,
+                            PopupMode::PlanetSystem => PopupMode::Hide,
+                            PopupMode::CenterStar => PopupMode::PlanetSystem,
+                            PopupMode::Planet => PopupMode::Planet
+                        }
+                    },
+                    'c' => self.popup_state = PopupMode::Hide,
                     '\n' => {
                         let index = self.systems_list.state.selected().unwrap_or_default();
 
-                        if self.show_popup {
-                            self.input_mode = InputMode::Editing;
-                        } else {
-                            self.show_popup = !self.show_popup;
-                            self.system_edit = Some(self.planet_systems[index].clone())
+                        match self.popup_state {
+                            PopupMode::Hide => {
+                                self.popup_state = PopupMode::PlanetSystem;
+                                self.system_edit = Some(self.planet_systems[index].clone())
+                            }
+                            PopupMode::PlanetSystem => { self.input_mode = InputMode::Editing }
+                            PopupMode::CenterStar => {}
+                            PopupMode::Planet => {}
                         }
                     }
                     _ => {}

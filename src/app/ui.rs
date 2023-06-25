@@ -50,7 +50,9 @@ fn draw_status_line<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
             Span::from(" | "),
             Span::from("'.' = backspace"),
             Span::from(" | "),
-            Span::from("'p' = show/hide popup"),
+            Span::from("'p' = reduce popup state"),
+            Span::from(" | "),
+            Span::from("'c' = close popup"),
         ]),
     ];
 
@@ -113,18 +115,11 @@ fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     draw_list(f, app, chunks[0]);
     draw_planet_system_info(f, app, chunks[1], index);
 
-    if app.show_popup {
-
-        let block = Block::default()
-            .title(format!("Edit {}", app.planet_systems[index].name.clone()))
-            .borders(Borders::ALL);
-
-        let popup_area = centered_rect(60, 60, f.size());
-
-        f.render_widget(Clear, popup_area); //this clears out the background
-        f.render_widget(block, popup_area);
-
-        draw_edit_list(f, app, popup_area)
+    match app.popup_state {
+        PopupMode::Hide => {}
+        PopupMode::PlanetSystem => draw_popup_planet_system(f, app, f.size()),
+        PopupMode::CenterStar => {}
+        PopupMode::Planet => {}
     }
 }
 
@@ -161,6 +156,24 @@ fn draw_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     f.render_stateful_widget(tasks, chunks[0], &mut app.systems_list.state);
 }
 
+fn draw_popup_planet_system<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+    where
+        B: Backend
+{
+    let index = app.systems_list.state.selected().unwrap_or_default();
+
+    let block = Block::default()
+        .title(format!("Edit {}", app.planet_systems[index].name.clone()))
+        .borders(Borders::ALL);
+
+    let popup_area = centered_rect(60, 60, f.size());
+
+    f.render_widget(Clear, popup_area); //this clears out the background
+    f.render_widget(block, popup_area);
+
+    draw_edit_list(f, app, popup_area)
+}
+
 fn draw_edit_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
         B: Backend,
@@ -183,12 +196,12 @@ fn draw_edit_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         .for_each(|s| planet_system_names.push(s.name.clone()));
 
     // Draw tasks
-    let mut tasks: Vec<ListItem> = planet_system_names
+    let mut edit_elements: Vec<ListItem> = planet_system_names
         .iter()
         .map(|p| ListItem::new(vec![Line::from(Span::raw(p))]))
         .collect();
     
-    tasks = vec![
+    edit_elements = vec![
         ListItem::new(
             vec![
                 Line::from(
@@ -207,7 +220,7 @@ fn draw_edit_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
 
     app.system_edit.as_ref().unwrap().planets
         .iter()
-        .for_each(|p| tasks.push(ListItem::new(
+        .for_each(|p| edit_elements.push(ListItem::new(
             vec![
                 Line::from(
                     format!("Planet: {}", p.name)
@@ -215,9 +228,9 @@ fn draw_edit_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
             ]
         )));
 
-    app.system_edit_list.size = tasks.len();
+    app.system_edit_list.size = edit_elements.len();
 
-    let tasks = List::new(tasks)
+    let tasks = List::new(edit_elements)
         .block(Block::default())
         .highlight_style(Style::default()
             .add_modifier(Modifier::BOLD)
