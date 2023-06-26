@@ -1,4 +1,5 @@
 use std::fmt::format;
+use std::rc::Rc;
 use std::thread::sleep;
 use std::time::Duration;
 use crate::app::app::{App, InputMode, PopupMode};
@@ -195,33 +196,44 @@ fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     f.render_widget(Clear, popup_area); //this clears out the background
     f.render_widget(block, popup_area);
 
-    match app.popup_state {
-        PopupMode::Hide => {}
-        PopupMode::PlanetSystem => draw_edit_planet_system_list(f, app, popup_area),
-        PopupMode::CenterStar => {}
-        PopupMode::Planet => draw_edit_planet_list(f, app, popup_area),
+    if app.popup_state != PopupMode::Hide {
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .margin(1)
+            .constraints(
+                [
+                    Constraint::Min(1),
+                    Constraint::Length(3),
+                ]
+                    .as_ref(),
+            )
+            .split(popup_area);
+
+        match app.popup_state {
+            PopupMode::Hide => {}
+            PopupMode::PlanetSystem => draw_edit_planet_system_list(f, app, &chunks),
+            PopupMode::CenterStar => {}
+            PopupMode::Planet => draw_edit_planet_list(f, app, &chunks),
+        }
+
+        let input = Paragraph::new(app.input.as_str())
+            .style(match app.input_mode {
+                InputMode::Normal => Style::default(),
+                InputMode::Editing => Style::default().fg(Color::Yellow),
+            })
+            .block(Block::default().borders(Borders::ALL).title("Input"));
+
+        f.render_widget(input, chunks[1]);
     }
 }
 
 /*
 Draw edit list
  */
-fn draw_edit_planet_system_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+fn draw_edit_planet_system_list<B>(f: &mut Frame<B>, app: &mut App, chunks: &Rc<[Rect]>)
     where
         B: Backend,
 {
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .margin(1)
-        .constraints(
-            [
-                Constraint::Min(1),
-                Constraint::Length(3),
-            ]
-                .as_ref(),
-        )
-        .split(area);
-
     let mut planet_system_names: Vec<String> = vec![];
 
     app.planet_systems.iter()
@@ -270,36 +282,12 @@ fn draw_edit_planet_system_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         .highlight_symbol("> ");
 
     f.render_stateful_widget(tasks, chunks[0], &mut app.planet_system_edit_list.state);
-
-    let input = Paragraph::new(app.input.as_str())
-        .style(match app.input_mode {
-            InputMode::Normal => Style::default(),
-            InputMode::Editing => Style::default().fg(Color::Yellow),
-        })
-        .block(Block::default().borders(Borders::ALL).title("Input"));
-
-    f.render_widget(input, chunks[1]);
 }
 
-fn draw_edit_planet_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+fn draw_edit_planet_list<B>(f: &mut Frame<B>, app: &mut App, chunks: &Rc<[Rect]>)
     where
         B: Backend,
 {
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .margin(1)
-        .constraints(
-            [
-                Constraint::Min(1),
-                Constraint::Length(3),
-            ]
-                .as_ref(),
-        )
-        .split(area);
-
-    let planet_index = app.planet_edit_list.state.selected().unwrap_or_default();
-    let planet_edit = app.planet_edit_list.edit_element.as_ref().unwrap();
-
     // Draw tasks
     let edit_elements: Vec<ListItem> = app.planet_edit_list.edit_element
         .as_ref()
@@ -320,15 +308,6 @@ fn draw_edit_planet_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         .highlight_symbol("> ");
 
     f.render_stateful_widget(tasks, chunks[0], &mut app.planet_edit_list.state);
-
-    let input = Paragraph::new(app.input.as_str())
-        .style(match app.input_mode {
-            InputMode::Normal => Style::default(),
-            InputMode::Editing => Style::default().fg(Color::Yellow),
-        })
-        .block(Block::default().borders(Borders::ALL).title("Input"));
-
-    f.render_widget(input, chunks[1]);
 }
 
 /*
