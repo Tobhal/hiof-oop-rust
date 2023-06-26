@@ -2,7 +2,7 @@ use std::error::Error;
 use std::thread::sleep;
 use std::time::Duration;
 use crate::planet_system::moon::Moon;
-use crate::util::ui::{FieldEditable, NoFieldError};
+use crate::util::ui::{FieldEditable, NoFieldError, Field};
 
 #[derive(Debug, Clone)]
 pub struct Planet {
@@ -59,5 +59,16 @@ impl FieldEditable for Planet {
         }
 
         Ok(())
+    }
+
+    fn get_field(&self) -> Vec<Field> {
+        vec![
+            Field { name: "Name", value: self.name.to_string() },
+            Field { name: "Mass", value: format!("{:e}", self.mass) },
+            Field { name: "Radius", value: format!("{:e}", self.radius) },
+            Field { name: "Semi major axis", value: format!("{:e}", self.semi_major_axis) },
+            Field { name: "eccentricity", value: format!("{:e}", self.eccentricity) },
+            Field { name: "orbital period", value: format!("{:e}", self.orbital_period) }
+        ]
     }
 }

@@ -13,6 +13,7 @@ use ratatui::{
 use ratatui::layout::Alignment;
 use ratatui::text::Text;
 use ratatui::widgets::Clear;
+use crate::util::ui::FieldEditable;
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
@@ -300,50 +301,14 @@ fn draw_edit_planet_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     let planet_edit = app.planet_edit_list.edit_element.as_ref().unwrap();
 
     // Draw tasks
-    let edit_elements: Vec<ListItem> = vec![
-        ListItem::new(
-            vec![
-                Line::from(
-                    format!("Name: {}", planet_edit.name.to_string())
-                )
-            ]
-        ),
-        ListItem::new(
-            vec![
-                Line::from(
-                    format!("Mass: {}", planet_edit.mass.to_string())
-                )
-            ]
-        ),
-        ListItem::new(
-            vec![
-                Line::from(
-                    format!("Radius: {}", planet_edit.radius.to_string())
-                )
-            ]
-        ),
-        ListItem::new(
-            vec![
-                Line::from(
-                    format!("Semi major axis: {}", planet_edit.semi_major_axis.to_string())
-                )
-            ]
-        ),
-        ListItem::new(
-            vec![
-                Line::from(
-                    format!("Eccentricity: {}", planet_edit.eccentricity.to_string())
-                )
-            ]
-        ),
-        ListItem::new(
-            vec![
-                Line::from(
-                    format!("Orbital period: {}", planet_edit.orbital_period.to_string())
-                )
-            ]
-        ),
-    ];
+    let edit_elements: Vec<ListItem> = app.planet_edit_list.edit_element
+        .as_ref()
+        .unwrap()
+        .get_field()
+        .iter()
+        .map(|field| ListItem::new(
+            Line::from(format!("{}: {}", field.name, field.value))
+        )).collect();
 
     app.planet_edit_list.size = edit_elements.len();
 

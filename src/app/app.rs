@@ -31,15 +31,15 @@ impl<'a> TabsState<'a> {
     }
 }
 
-pub struct StatefulList<'l, T, E> {
+pub struct StatefulList<'l, E> {
     pub state: ListState,
-    pub items: &'l Vec<T>,
+    pub items: &'l Vec<String>,
     pub size: usize,
     pub edit_element: Option<E>
 }
 
-impl<'l, T, E> StatefulList<'l, T, E> {
-    pub fn new_with_items(items: &Vec<T>) -> StatefulList<T, E> {
+impl<'l, E> StatefulList<'l, E> {
+    pub fn new_with_items(items: &Vec<String>) -> StatefulList<E> {
         StatefulList {
             state: ListState::default(),
             items,
@@ -113,7 +113,7 @@ pub struct App<'a> {
     pub tabs: TabsState<'a>,
     pub enhanced_graphics: bool,
 
-    pub planet_systems_list: StatefulList<'a, String, PlanetSystem>,
+    pub planet_systems_list: StatefulList<'a, PlanetSystem>,
     pub planet_systems: Vec<PlanetSystem>,
 
     pub input_mode: InputMode,
@@ -122,9 +122,9 @@ pub struct App<'a> {
 
     pub popup_state: PopupMode,
 
-    pub planet_system_edit_list: StatefulList<'a, String, PlanetSystem>,
+    pub planet_system_edit_list: StatefulList<'a, PlanetSystem>,
 
-    pub planet_edit_list: StatefulList<'a, String, Planet>,
+    pub planet_edit_list: StatefulList<'a, Planet>,
 }
 
 impl<'a> App<'a> {

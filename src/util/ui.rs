@@ -17,7 +17,12 @@ impl fmt::Debug for NoFieldError {
 
 impl Error for NoFieldError {}
 
+pub struct Field<'f> {
+    pub(crate) name: &'f str,
+    pub(crate) value: String
+}
 
 pub trait FieldEditable {
     fn edit_field(&mut self, index: usize, value: String) -> Result<(), Box<dyn Error>>;
+    fn get_field(& self) -> Vec<Field>;
 }
