@@ -1,4 +1,4 @@
-use ratatui::widgets::ListState;
+use ratatui::widgets::{ListItem, ListState};
 use crate::planet_system::planet_system::PlanetSystem;
 
 use std::{thread, time};
@@ -40,8 +40,11 @@ pub struct StatefulList<'l, E> {
 
 impl<'l, E> StatefulList<'l, E> {
     pub fn new_with_items(items: &Vec<String>) -> StatefulList<E> {
+        let mut state = ListState::default();
+        state.select(Some(0));
+
         StatefulList {
-            state: ListState::default(),
+            state,
             items,
             size: 0,
             edit_element: None
