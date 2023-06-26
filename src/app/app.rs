@@ -28,18 +28,20 @@ impl<'a> TabsState<'a> {
     }
 }
 
-pub struct StatefulList<'l, T> {
+pub struct StatefulList<'l, T, E> {
     pub state: ListState,
     pub items: &'l Vec<T>,
     pub size: usize,
+    pub edit_element: Option<E>
 }
 
-impl<'l, T> StatefulList<'l, T> {
-    pub fn new_with_items(items: &Vec<T>) -> StatefulList<T> {
+impl<'l, T, E> StatefulList<'l, T, E> {
+    pub fn new_with_items(items: &Vec<T>) -> StatefulList<T, E> {
         StatefulList {
             state: ListState::default(),
             items,
-            size: 0
+            size: 0,
+            edit_element: None
         }
     }
 
@@ -108,7 +110,7 @@ pub struct App<'a> {
     pub tabs: TabsState<'a>,
     pub enhanced_graphics: bool,
 
-    pub planet_systems_list: StatefulList<'a, String>,
+    pub planet_systems_list: StatefulList<'a, String, PlanetSystem>,
     pub planet_systems: Vec<PlanetSystem>,
 
     pub input_mode: InputMode,
@@ -117,11 +119,9 @@ pub struct App<'a> {
 
     pub popup_state: PopupMode,
 
-    pub planet_system_edit_list: StatefulList<'a, String>,
-    pub planet_system_edit: Option<PlanetSystem>,
+    pub planet_system_edit_list: StatefulList<'a, String, PlanetSystem>,
 
-    pub planet_edit_list: StatefulList<'a, String>,
-    pub planet_edit: Option<Planet>
+    pub planet_edit_list: StatefulList<'a, String, Planet>,
 }
 
 impl<'a> App<'a> {
@@ -142,10 +142,8 @@ impl<'a> App<'a> {
             popup_state: PopupMode::Hide,
 
             planet_system_edit_list: StatefulList::new_with_items(planet_system_names),
-            planet_system_edit: None,
 
             planet_edit_list: StatefulList::new_with_items(planet_system_names),
-            planet_edit: None
         }
     }
 
@@ -197,7 +195,7 @@ impl<'a> App<'a> {
                         let index = self.planet_systems_list.state.selected().unwrap_or_default();
 
                         self.popup_state = PopupMode::PlanetSystem;
-                        self.planet_system_edit = Some(self.planet_systems[index].clone());
+                        self.planet_system_edit_list.edit_element = Some(self.planet_systems[index].clone());
                     }
                     _ => {}
                 }
@@ -214,7 +212,7 @@ impl<'a> App<'a> {
                             0 | 1 => self.input_mode = InputMode::Editing,
                             _ => {
                                 self.popup_state = PopupMode::Planet;
-                                self.planet_edit = Some(self.planet_systems[planet_system_index].planets[edit_index-2].clone())
+                                self.planet_edit_list.edit_element = Some(self.planet_systems[planet_system_index].planets[edit_index-2].clone())
                             }
                         }
                     }
@@ -244,7 +242,7 @@ impl<'a> App<'a> {
                         let edit_index = self.planet_system_edit_list.state.selected().unwrap_or_default();
 
                         let planet_system = &mut self.planet_systems[system_index];
-                        let planet_system_edit = self.planet_system_edit.as_mut().unwrap();
+                        let planet_system_edit = self.planet_system_edit_list.edit_element.as_mut().unwrap();
 
                         match edit_index {
                             0 => {
@@ -280,7 +278,7 @@ impl<'a> App<'a> {
                         let edit_index = self.planet_edit_list.state.selected().unwrap_or_default();
 
                         let planet = &mut self.planet_systems[system_index].planets[edit_index];
-                        let planet_edit = self.planet_edit.as_mut().unwrap();
+                        let planet_edit = self.planet_edit_list.edit_element.as_mut().unwrap();
 
                         match edit_index {
                             0 => {

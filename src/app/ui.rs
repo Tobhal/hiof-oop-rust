@@ -177,11 +177,11 @@ fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
 
     let edit_path: String = match app.popup_state {
         PopupMode::Hide => String::new(),
-        PopupMode::PlanetSystem => app.planet_system_edit.as_ref().unwrap().name.clone(),
+        PopupMode::PlanetSystem => app.planet_system_edit_list.edit_element.as_ref().unwrap().name.clone(),
         PopupMode::CenterStar => format!("TODO!"),
         PopupMode::Planet => format!("{} -> {}",
-                                     app.planet_system_edit.as_ref().unwrap().name.clone(),
-                                     app.planet_edit.as_ref().unwrap().name.clone()
+                                     app.planet_system_edit_list.edit_element.as_ref().unwrap().name.clone(),
+                                     app.planet_edit_list.edit_element.as_ref().unwrap().name.clone()
         )
     };
 
@@ -236,20 +236,20 @@ fn draw_edit_planet_system_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         ListItem::new(
             vec![
                 Line::from(
-                    format!("Name: {}", app.planet_system_edit.as_ref().unwrap().name.to_string())
+                    format!("Name: {}", app.planet_system_edit_list.edit_element.as_ref().unwrap().name.to_string())
                 )
             ]
         ),
         ListItem::new(
             vec![
                 Line::from(
-                    format!("Center star name: {}", app.planet_system_edit.as_ref().unwrap().center_star.name.to_string())
+                    format!("Center star name: {}", app.planet_system_edit_list.edit_element.as_ref().unwrap().center_star.name.to_string())
                 )
             ]
         ),
     ];
 
-    app.planet_system_edit.as_ref().unwrap().planets
+    app.planet_system_edit_list.edit_element.as_ref().unwrap().planets
         .iter()
         .for_each(|p| edit_elements.push(ListItem::new(
             vec![
@@ -297,7 +297,7 @@ fn draw_edit_planet_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         .split(area);
 
     let planet_index = app.planet_edit_list.state.selected().unwrap_or_default();
-    let planet_edit = app.planet_edit.as_ref().unwrap();
+    let planet_edit = app.planet_edit_list.edit_element.as_ref().unwrap();
 
     // Draw tasks
     let edit_elements: Vec<ListItem> = vec![
