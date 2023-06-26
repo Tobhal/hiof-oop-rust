@@ -2,9 +2,12 @@ use ratatui::widgets::ListState;
 use crate::planet_system::planet_system::PlanetSystem;
 
 use std::{thread, time};
+use std::error::Error;
 use std::thread::sleep;
 use std::time::Duration;
+use ratatui::layout::Direction;
 use crate::planet_system::planet::Planet;
+use crate::util::ui::FieldEditable;
 
 pub struct TabsState<'a> {
     pub titles: Vec<&'a str>,
@@ -147,7 +150,7 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn on_up(&mut self) {
+    pub fn on_up(&mut self) -> Result<(), Box<dyn Error>> {
         match self.popup_state {
             PopupMode::Hide => {
                 self.planet_systems_list.previous();
@@ -160,9 +163,11 @@ impl<'a> App<'a> {
             }
             PopupMode::CenterStar => {}
         }
+
+        Ok(())
     }
 
-    pub fn on_down(&mut self) {
+    pub fn on_down(&mut self) -> Result<(), Box<dyn Error>> {
         match self.popup_state {
             PopupMode::Hide => {
                 self.planet_systems_list.next();
@@ -175,17 +180,23 @@ impl<'a> App<'a> {
             }
             PopupMode::CenterStar => {}
         }
+
+        Ok(())
     }
 
-    pub fn on_right(&mut self) {
+    pub fn on_right(&mut self) -> Result<(), Box<dyn Error>> {
         self.tabs.next();
+
+        Ok(())
     }
 
-    pub fn on_left(&mut self) {
+    pub fn on_left(&mut self) -> Result<(), Box<dyn Error>> {
         self.tabs.previous();
+
+        Ok(())
     }
 
-    pub fn on_key(&mut self, c: char) {
+    pub fn on_key(&mut self, c: char) -> Result<(), Box<dyn Error>> {
         match (self.input_mode.clone(), self.popup_state.clone()) {
             (InputMode::Normal, PopupMode::Hide) => {
                 match c {
@@ -203,7 +214,10 @@ impl<'a> App<'a> {
             (InputMode::Normal, PopupMode::PlanetSystem) => {
                 match c {
                     'q' => self.should_quit = true,
-                    'c' | 'p' => self.popup_state = PopupMode::Hide,
+                    'c' | 'p' => {
+                        self.planet_system_edit_list.state.select(Some(0));
+                        self.popup_state = PopupMode::Hide;
+                    },
                     '\n' => {
                         let planet_system_index = self.planet_systems_list.state.selected().unwrap_or_default();
                         let edit_index = self.planet_system_edit_list.state.selected().unwrap_or_default();
@@ -222,8 +236,15 @@ impl<'a> App<'a> {
             (InputMode::Normal, PopupMode::Planet) => {
                 match c {
                     'q' => self.should_quit = true,
-                    'c' => self.popup_state = PopupMode::Hide,
-                    'p' => self.popup_state = PopupMode::PlanetSystem,
+                    'c' => {
+                        self.planet_systems_list.state.select(Some(0));
+                        self.planet_edit_list.state.select(Some(0));
+                        self.popup_state = PopupMode::Hide;
+                    },
+                    'p' => {
+                        self.planet_edit_list.state.select(Some(0));
+                        self.popup_state = PopupMode::PlanetSystem;
+                    },
                     '\n' => {
                         self.input_mode = InputMode::Editing;
                     }
@@ -274,19 +295,33 @@ impl<'a> App<'a> {
                     '\n' => {
                         let message: String = self.input.drain(..).collect();
 
-                        let system_index = self.planet_systems_list.state.selected().unwrap_or_default();
-                        let edit_index = self.planet_edit_list.state.selected().unwrap_or_default();
 
-                        let planet = &mut self.planet_systems[system_index].planets[edit_index];
-                        let planet_edit = self.planet_edit_list.edit_element.as_mut().unwrap();
+                        let planet_system_index = self.planet_systems_list.state.selected().unwrap_or_default();
+                        let planet_system_edit_index = self.planet_system_edit_list.state.selected().unwrap_or_default() - 2;
+                        let planet_edit_index = self.planet_edit_list.state.selected().unwrap_or_default();
 
-                        match edit_index {
-                            0 => {
-                                planet.name = message.clone();
-                                planet_edit.name = message.clone();
+                        match self.planet_systems[planet_system_index].planets[planet_system_edit_index].edit_field(planet_edit_index, message.clone()) {
+                            Ok(v) => v,
+                            Err(e) => {
+                                println!("{:#?}", e.to_string());
+                                sleep(Duration::from_secs(5));
+                                self.input_mode = InputMode::Normal;
+                                return Ok(());
                             }
-                            _ => {}
-                        }
+                        };
+                        // sleep(Duration::from_secs(5));
+                        match self.planet_edit_list.edit_element.as_mut().unwrap().edit_field(planet_edit_index,message.clone()) {
+                            Ok(v) => v,
+                            Err(e) => {
+                                println!("{:#?}", e.to_string());
+                                sleep(Duration::from_secs(5));
+                                self.input_mode = InputMode::Normal;
+
+                                return Ok(());
+                            }
+                        };
+
+                        self.input_mode = InputMode::Normal
                     }
                     '\r' | '\u{0008}' | '.' => {
                         self.input.pop();
@@ -297,9 +332,13 @@ impl<'a> App<'a> {
             }
             _ => {}
         }
+
+        Ok(())
     }
 
-    pub fn on_tick(&mut self) {
+    pub fn on_tick(&mut self) -> Result<(), Box<dyn Error>> {
         // Update progress
+
+        Ok(())
     }
 }

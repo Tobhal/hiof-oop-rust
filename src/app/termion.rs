@@ -54,10 +54,11 @@ fn run_app<B: Backend>(
                 Key::Down => app.on_down(),
                 Key::Left => app.on_left(),
                 Key::Right => app.on_right(),
-                _ => {}
+                _ => {Ok(())}
             },
             Event::Tick => app.on_tick(),
-        }
+        }.expect("Event error");
+
         if app.should_quit {
             return Ok(());
         }

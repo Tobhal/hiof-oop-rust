@@ -325,6 +325,13 @@ fn draw_edit_planet_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         ListItem::new(
             vec![
                 Line::from(
+                    format!("Semi major axis: {}", planet_edit.semi_major_axis.to_string())
+                )
+            ]
+        ),
+        ListItem::new(
+            vec![
+                Line::from(
                     format!("Eccentricity: {}", planet_edit.eccentricity.to_string())
                 )
             ]
@@ -333,13 +340,6 @@ fn draw_edit_planet_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
             vec![
                 Line::from(
                     format!("Orbital period: {}", planet_edit.orbital_period.to_string())
-                )
-            ]
-        ),
-        ListItem::new(
-            vec![
-                Line::from(
-                    format!("Semi major axis: {}", planet_edit.semi_major_axis.to_string())
                 )
             ]
         ),

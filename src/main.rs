@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // println!("{planet_systems:#?}");
 
-    run(Duration::from_millis(250), true, planet_systems).unwrap();
+    run(Duration::from_millis(250), true, planet_systems)?;
 
     Ok(())
 }

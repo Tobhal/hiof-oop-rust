@@ -1,4 +1,8 @@
+use std::error::Error;
+use std::thread::sleep;
+use std::time::Duration;
 use crate::planet_system::moon::Moon;
+use crate::util::ui::{FieldEditable, NoFieldError};
 
 #[derive(Debug, Clone)]
 pub struct Planet {
@@ -22,5 +26,31 @@ impl From<Vec<String>> for Planet {
             orbital_period: value[5].parse::<f32>().unwrap_or_default(),
             moons: vec![],
         }
+    }
+}
+
+impl FieldEditable for Planet {
+    fn edit_field(&mut self, index: usize, value: String) -> Result<(), Box<dyn Error>> {
+        // println!("{:#?}", index);
+        // sleep(Duration::from_secs(5));
+        match index {
+            0 => self.name = value,
+            1 => self.mass = match value.parse() {
+                Ok(val) => val,
+                Err(e) => {
+                    // sleep(Duration::from_secs(5));
+                    return Err(Box::new(e));
+                }
+            },
+            2 => self.radius = value.parse()?,
+            3 => self.semi_major_axis = value.parse()?,
+            4 => self.eccentricity = value.parse()?,
+            5 => self.orbital_period = value.parse()?,
+            i => {
+                return Err(Box::new(NoFieldError(index)));
+            }
+        }
+
+        Ok(())
     }
 }
