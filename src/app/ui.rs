@@ -36,6 +36,9 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
 }
 
+/*
+Draw status line
+ */
 fn draw_status_line<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
         B: Backend,
@@ -64,6 +67,9 @@ fn draw_status_line<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     f.render_widget(paragraph, area);
 }
 
+/*
+Draw tabs
+ */
 fn draw_tabs<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
         B: Backend,
@@ -115,14 +121,14 @@ fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     draw_list(f, app, chunks[0]);
     draw_planet_system_info(f, app, chunks[1], index);
 
-    match app.popup_state {
-        PopupMode::Hide => {}
-        PopupMode::PlanetSystem => draw_popup_planet_system(f, app, f.size()),
-        PopupMode::CenterStar => {}
-        PopupMode::Planet => {}
+    if app.popup_state != PopupMode::Hide {
+        draw_popup(f, app, f.size())
     }
 }
 
+/*
+Draw lists
+ */
 fn draw_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
         B: Backend,
@@ -156,14 +162,39 @@ fn draw_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     f.render_stateful_widget(tasks, chunks[0], &mut app.systems_list.state);
 }
 
-fn draw_popup_planet_system<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+/*
+Draw popup
+ */
+fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
         B: Backend
 {
-    let index = app.systems_list.state.selected().unwrap_or_default();
+    let system_index = app.systems_list.state.selected().unwrap_or_default();
+
+    let edit_path: String = match app.popup_state {
+        PopupMode::Hide => String::new(),
+        PopupMode::PlanetSystem => app.planet_systems[system_index].name.clone(),
+        PopupMode::CenterStar => format!("{} -> {}",
+                                         app.planet_systems[system_index].name.clone(),
+                                         app.planet_systems[system_index].center_star.name.clone()
+        ),
+        PopupMode::Planet => format!("{} -> {}",
+                                     app.planet_systems[system_index]
+                                         .name
+                                         .clone(),
+                                     app.planet_systems[system_index]
+                                         .planets[
+                                            app.system_edit_list.state
+                                            .selected()
+                                            .unwrap_or_default()
+                                         ]
+                                         .name
+                                         .clone()
+        )
+    };
 
     let block = Block::default()
-        .title(format!("Edit {}", app.planet_systems[index].name.clone()))
+        .title(format!("Edit {}", edit_path))
         .borders(Borders::ALL);
 
     let popup_area = centered_rect(60, 60, f.size());
@@ -171,10 +202,18 @@ fn draw_popup_planet_system<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     f.render_widget(Clear, popup_area); //this clears out the background
     f.render_widget(block, popup_area);
 
-    draw_edit_list(f, app, popup_area)
+    match app.popup_state {
+        PopupMode::Hide => {}
+        PopupMode::PlanetSystem => draw_edit_planet_system_list(f, app, popup_area),
+        PopupMode::CenterStar => {}
+        PopupMode::Planet => draw_edit_planet_list(f, app, popup_area),
+    }
 }
 
-fn draw_edit_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+/*
+Draw edit list
+ */
+fn draw_edit_planet_system_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
         B: Backend,
 {
@@ -249,6 +288,99 @@ fn draw_edit_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     f.render_widget(input, chunks[1]);
 }
 
+fn draw_edit_planet_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+    where
+        B: Backend,
+{
+
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(1)
+        .constraints(
+            [
+                Constraint::Min(1),
+                Constraint::Length(3),
+            ]
+                .as_ref(),
+        )
+        .split(area);
+
+
+    let system_index = app.systems_list.state.selected().unwrap_or_default();
+    let planet_index = app.system_edit_list.state.selected().unwrap_or_default();
+
+
+    // Draw tasks
+    let edit_elements: Vec<ListItem> = vec![
+        ListItem::new(
+            vec![
+                Line::from(
+                    format!("Name: {}", app.system_edit.as_ref().unwrap().planets[planet_index].name.to_string())
+                )
+            ]
+        ),
+        ListItem::new(
+            vec![
+                Line::from(
+                    format!("Mass: {}", app.system_edit.as_ref().unwrap().planets[planet_index].mass.to_string())
+                )
+            ]
+        ),
+        ListItem::new(
+            vec![
+                Line::from(
+                    format!("Radius: {}", app.system_edit.as_ref().unwrap().planets[planet_index].radius.to_string())
+                )
+            ]
+        ),
+        ListItem::new(
+            vec![
+                Line::from(
+                    format!("Eccentricity: {}", app.system_edit.as_ref().unwrap().planets[planet_index].eccentricity.to_string())
+                )
+            ]
+        ),
+        ListItem::new(
+            vec![
+                Line::from(
+                    format!("Orbital period: {}", app.system_edit.as_ref().unwrap().planets[planet_index].orbital_period.to_string())
+                )
+            ]
+        ),
+        ListItem::new(
+            vec![
+                Line::from(
+                    format!("Semi major axis: {}", app.system_edit.as_ref().unwrap().planets[planet_index].semi_major_axis.to_string())
+                )
+            ]
+        ),
+    ];
+
+    app.system_edit_list.size = edit_elements.len();
+
+    let tasks = List::new(edit_elements)
+        .block(Block::default())
+        .highlight_style(Style::default()
+            .add_modifier(Modifier::BOLD)
+        )
+        .highlight_symbol("> ");
+
+    f.render_stateful_widget(tasks, chunks[0], &mut app.system_edit_list.state);
+
+    let input = Paragraph::new(app.input.as_str())
+        .style(match app.input_mode {
+            InputMode::Normal => Style::default(),
+            InputMode::Editing => Style::default().fg(Color::Yellow),
+        })
+        .block(Block::default().borders(Borders::ALL).title("Input"));
+
+    f.render_widget(input, chunks[1]);
+}
+
+/*
+Draw info
+ */
 fn draw_planet_system_info<B>(f: &mut Frame<B>, app: &mut App, area: Rect, index: usize)
     where
         B: Backend,

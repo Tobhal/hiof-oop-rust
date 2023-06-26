@@ -4,6 +4,7 @@ use crate::planet_system::planet_system::PlanetSystem;
 use std::{thread, time};
 use std::thread::sleep;
 use std::time::Duration;
+use crate::planet_system::planet::Planet;
 
 pub struct TabsState<'a> {
     pub titles: Vec<&'a str>,
@@ -34,7 +35,7 @@ pub struct StatefulList<'l, T> {
 }
 
 impl<'l, T> StatefulList<'l, T> {
-    pub fn with_items(items: &Vec<T>) -> StatefulList<T> {
+    pub fn new_with_items(items: &Vec<T>) -> StatefulList<T> {
         StatefulList {
             state: ListState::default(),
             items,
@@ -85,16 +86,15 @@ impl<'l, T> StatefulList<'l, T> {
         };
         self.state.select(Some(i));
     }
-
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum InputMode {
     Normal,
     Editing
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum PopupMode {
     Hide,
     PlanetSystem,
@@ -106,9 +106,10 @@ pub struct App<'a> {
     pub title: &'a str,
     pub should_quit: bool,
     pub tabs: TabsState<'a>,
+    pub enhanced_graphics: bool,
+
     pub systems_list: StatefulList<'a, String>,
     pub planet_systems: Vec<PlanetSystem>,
-    pub enhanced_graphics: bool,
 
     pub input_mode: InputMode,
     pub input: String,
@@ -126,16 +127,18 @@ impl<'a> App<'a> {
             title,
             should_quit: false,
             tabs: TabsState::new(vec!["Planets"]),
-            systems_list: StatefulList::with_items(planet_system_names),
-            planet_systems,
             enhanced_graphics,
+
+            systems_list: StatefulList::new_with_items(planet_system_names),
+            planet_systems,
+
             input_mode: InputMode::Normal,
             input: String::new(),
             messages: Vec::new(),
 
             popup_state: PopupMode::Hide,
 
-            system_edit_list: StatefulList::with_items(planet_system_names),
+            system_edit_list: StatefulList::new_with_items(planet_system_names),
             system_edit: None,
         }
     }
@@ -145,11 +148,9 @@ impl<'a> App<'a> {
             PopupMode::Hide => {
                 self.systems_list.previous();
             }
-            PopupMode::PlanetSystem => {
+            PopupMode::PlanetSystem | PopupMode::Planet | PopupMode::CenterStar => {
                 self.system_edit_list.previous_size();
             }
-            PopupMode::CenterStar => {}
-            PopupMode::Planet => {}
         }
     }
 
@@ -158,11 +159,9 @@ impl<'a> App<'a> {
             PopupMode::Hide => {
                 self.systems_list.next();
             }
-            PopupMode::PlanetSystem => {
+            PopupMode::PlanetSystem | PopupMode::Planet | PopupMode::CenterStar => {
                 self.system_edit_list.next_size();
             }
-            PopupMode::CenterStar => {}
-            PopupMode::Planet => {}
         }
     }
 
@@ -175,36 +174,52 @@ impl<'a> App<'a> {
     }
 
     pub fn on_key(&mut self, c: char) {
-        match self.input_mode {
-            InputMode::Normal => {
+        match (self.input_mode.clone(), self.popup_state.clone()) {
+            (InputMode::Normal, PopupMode::Hide) => {
                 match c {
-                    'q' => { self.should_quit = true; }
-                    'p' => {
-                        self.popup_state = match self.popup_state {
-                            PopupMode::Hide => PopupMode::Hide,
-                            PopupMode::PlanetSystem => PopupMode::Hide,
-                            PopupMode::CenterStar => PopupMode::PlanetSystem,
-                            PopupMode::Planet => PopupMode::Planet
-                        }
-                    },
+                    'q' => self.should_quit = true,
                     'c' => self.popup_state = PopupMode::Hide,
                     '\n' => {
                         let index = self.systems_list.state.selected().unwrap_or_default();
 
-                        match self.popup_state {
-                            PopupMode::Hide => {
-                                self.popup_state = PopupMode::PlanetSystem;
-                                self.system_edit = Some(self.planet_systems[index].clone())
+                        self.popup_state = PopupMode::PlanetSystem;
+                        self.system_edit = Some(self.planet_systems[index].clone());
+                    }
+                    _ => {}
+                }
+            }
+            (InputMode::Normal, PopupMode::PlanetSystem) => {
+                match c {
+                    'q' => self.should_quit = true,
+                    'c' | 'p' => self.popup_state = PopupMode::Hide,
+                    '\n' => {
+                        let system_index = self.systems_list.state.selected().unwrap_or_default();
+                        let edit_index = self.system_edit_list.state.selected().unwrap_or_default();
+
+                        match edit_index {
+                            0 | 1 => self.input_mode = InputMode::Editing,
+                            _ => {
+
+                                self.popup_state = PopupMode::Planet;
+                                self.system_edit_list.state.select(Some(0));
                             }
-                            PopupMode::PlanetSystem => { self.input_mode = InputMode::Editing }
-                            PopupMode::CenterStar => {}
-                            PopupMode::Planet => {}
                         }
                     }
                     _ => {}
                 }
             }
-            InputMode::Editing => {
+            (InputMode::Normal, PopupMode::Planet) => {
+                match c {
+                    'q' => self.should_quit = true,
+                    'c' | 'p' => self.popup_state = PopupMode::Hide,
+                    '\n' => {
+                        self.input_mode = InputMode::Editing;
+                    }
+                    _ => {}
+                }
+            }
+
+            (InputMode::Editing, PopupMode::PlanetSystem) => {
                 match c {
                     '\n' => {
                         // Push edited line to the current editing line
@@ -214,18 +229,21 @@ impl<'a> App<'a> {
                         let system_index = self.systems_list.state.selected().unwrap_or_default();
                         let edit_index = self.system_edit_list.state.selected().unwrap_or_default();
 
+                        let planet_system = &mut self.planet_systems[system_index];
+                        let planet_system_edit = self.system_edit.as_mut().unwrap();
+
                         match edit_index {
                             0 => {
-                                self.planet_systems[system_index].name = message.clone();
-                                self.system_edit.as_mut().unwrap().name = message.clone();
+                                planet_system.name = message.clone();
+                                planet_system_edit.name = message.clone();
                             },
                             1 => {
-                                self.planet_systems[system_index].center_star.name = message.clone();
-                                self.system_edit.as_mut().unwrap().center_star.name = message.clone();
+                                planet_system.center_star.name = message.clone();
+                                planet_system_edit.center_star.name = message.clone();
                             },
                             2..=100 => {
-                                self.planet_systems[system_index].planets[edit_index-2].name = message.clone();
-                                self.system_edit.as_mut().unwrap().planets[edit_index-2].name = message.clone();
+                                planet_system.planets[edit_index-2].name = message.clone();
+                                planet_system_edit.planets[edit_index-2].name = message.clone();
                             }
                             _ => {}
                         }
@@ -239,6 +257,33 @@ impl<'a> App<'a> {
                     c => self.input.push(c)
                 }
             }
+            (InputMode::Editing, PopupMode::Planet) => {
+                match c {
+                    '\n' => {
+                        let message: String = self.input.drain(..).collect();
+
+                        let system_index = self.systems_list.state.selected().unwrap_or_default();
+                        let edit_index = self.system_edit_list.state.selected().unwrap_or_default();
+
+                        let planet = &mut self.planet_systems[system_index].planets[edit_index-2];
+                        let planet_edit = &mut self.system_edit.as_mut().unwrap().planets[edit_index-2];
+
+                        match edit_index {
+                            1 => {
+                                planet.name = message.clone();
+                                planet_edit.name = message.clone();
+                            }
+                            _ => {}
+                        }
+                    }
+                    '\r' | '\u{0008}' | '.' => {
+                        self.input.pop();
+                    }
+                    '\u{001B}' | '\'' => self.input_mode = InputMode::Normal,
+                    c => self.input.push(c)
+                }
+            }
+            _ => {}
         }
     }
 
