@@ -295,33 +295,24 @@ impl<'a> App<'a> {
                     '\n' => {
                         let message: String = self.input.drain(..).collect();
 
-
                         let planet_system_index = self.planet_systems_list.state.selected().unwrap_or_default();
                         let planet_system_edit_index = self.planet_system_edit_list.state.selected().unwrap_or_default() - 2;
                         let planet_edit_index = self.planet_edit_list.state.selected().unwrap_or_default();
 
                         match self.planet_systems[planet_system_index].planets[planet_system_edit_index].edit_field(planet_edit_index, message.clone()) {
-                            Ok(v) => v,
-                            Err(e) => {
-                                println!("{:#?}", e.to_string());
-                                sleep(Duration::from_secs(5));
-                                self.input_mode = InputMode::Normal;
-                                return Ok(());
-                            }
-                        };
-                        // sleep(Duration::from_secs(5));
-                        match self.planet_edit_list.edit_element.as_mut().unwrap().edit_field(planet_edit_index,message.clone()) {
-                            Ok(v) => v,
+                            Ok(_) => {}
                             Err(e) => {
                                 println!("{:#?}", e.to_string());
                                 sleep(Duration::from_secs(5));
                                 self.input_mode = InputMode::Normal;
 
-                                return Ok(());
+                                // Return before next function is run to not print two error messages to the screen.
+                                return Ok(())
                             }
                         };
+                        self.planet_edit_list.edit_element.as_mut().unwrap().edit_field(planet_edit_index,message.clone())?;
 
-                        self.input_mode = InputMode::Normal
+                        self.input_mode = InputMode::Normal;
                     }
                     '\r' | '\u{0008}' | '.' => {
                         self.input.pop();
