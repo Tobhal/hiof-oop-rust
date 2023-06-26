@@ -98,7 +98,7 @@ fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
         B: Backend,
 {
-    let index = app.systems_list.state.selected().unwrap_or_default();
+    let index = app.planet_systems_list.state.selected().unwrap_or_default();
 
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
@@ -159,7 +159,7 @@ fn draw_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         )
         .highlight_symbol("> ");
 
-    f.render_stateful_widget(tasks, chunks[0], &mut app.systems_list.state);
+    f.render_stateful_widget(tasks, chunks[0], &mut app.planet_systems_list.state);
 }
 
 /*
@@ -169,27 +169,19 @@ fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
         B: Backend
 {
-    let system_index = app.systems_list.state.selected().unwrap_or_default();
+    let system_index = app.planet_systems_list.state.selected().unwrap_or_default();
+
+    if app.popup_state == PopupMode::Planet {
+        // sleep(Duration::from_secs(5));
+    }
 
     let edit_path: String = match app.popup_state {
         PopupMode::Hide => String::new(),
-        PopupMode::PlanetSystem => app.planet_systems[system_index].name.clone(),
-        PopupMode::CenterStar => format!("{} -> {}",
-                                         app.planet_systems[system_index].name.clone(),
-                                         app.planet_systems[system_index].center_star.name.clone()
-        ),
+        PopupMode::PlanetSystem => app.planet_system_edit.as_ref().unwrap().name.clone(),
+        PopupMode::CenterStar => format!("TODO!"),
         PopupMode::Planet => format!("{} -> {}",
-                                     app.planet_systems[system_index]
-                                         .name
-                                         .clone(),
-                                     app.planet_systems[system_index]
-                                         .planets[
-                                            app.system_edit_list.state
-                                            .selected()
-                                            .unwrap_or_default()
-                                         ]
-                                         .name
-                                         .clone()
+                                     app.planet_system_edit.as_ref().unwrap().name.clone(),
+                                     app.planet_edit.as_ref().unwrap().name.clone()
         )
     };
 
@@ -244,20 +236,20 @@ fn draw_edit_planet_system_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         ListItem::new(
             vec![
                 Line::from(
-                    format!("Name: {}", app.system_edit.as_ref().unwrap().name.to_string())
+                    format!("Name: {}", app.planet_system_edit.as_ref().unwrap().name.to_string())
                 )
             ]
         ),
         ListItem::new(
             vec![
                 Line::from(
-                    format!("Center star name: {}", app.system_edit.as_ref().unwrap().center_star.name.to_string())
+                    format!("Center star name: {}", app.planet_system_edit.as_ref().unwrap().center_star.name.to_string())
                 )
             ]
         ),
     ];
 
-    app.system_edit.as_ref().unwrap().planets
+    app.planet_system_edit.as_ref().unwrap().planets
         .iter()
         .for_each(|p| edit_elements.push(ListItem::new(
             vec![
@@ -267,7 +259,7 @@ fn draw_edit_planet_system_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
             ]
         )));
 
-    app.system_edit_list.size = edit_elements.len();
+    app.planet_system_edit_list.size = edit_elements.len();
 
     let tasks = List::new(edit_elements)
         .block(Block::default())
@@ -276,7 +268,7 @@ fn draw_edit_planet_system_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         )
         .highlight_symbol("> ");
 
-    f.render_stateful_widget(tasks, chunks[0], &mut app.system_edit_list.state);
+    f.render_stateful_widget(tasks, chunks[0], &mut app.planet_system_edit_list.state);
 
     let input = Paragraph::new(app.input.as_str())
         .style(match app.input_mode {
@@ -292,8 +284,6 @@ fn draw_edit_planet_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
         B: Backend,
 {
-
-
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -306,58 +296,56 @@ fn draw_edit_planet_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         )
         .split(area);
 
-
-    let system_index = app.systems_list.state.selected().unwrap_or_default();
-    let planet_index = app.system_edit_list.state.selected().unwrap_or_default();
-
+    let planet_index = app.planet_edit_list.state.selected().unwrap_or_default();
+    let planet_edit = app.planet_edit.as_ref().unwrap();
 
     // Draw tasks
     let edit_elements: Vec<ListItem> = vec![
         ListItem::new(
             vec![
                 Line::from(
-                    format!("Name: {}", app.system_edit.as_ref().unwrap().planets[planet_index].name.to_string())
+                    format!("Name: {}", planet_edit.name.to_string())
                 )
             ]
         ),
         ListItem::new(
             vec![
                 Line::from(
-                    format!("Mass: {}", app.system_edit.as_ref().unwrap().planets[planet_index].mass.to_string())
+                    format!("Mass: {}", planet_edit.mass.to_string())
                 )
             ]
         ),
         ListItem::new(
             vec![
                 Line::from(
-                    format!("Radius: {}", app.system_edit.as_ref().unwrap().planets[planet_index].radius.to_string())
+                    format!("Radius: {}", planet_edit.radius.to_string())
                 )
             ]
         ),
         ListItem::new(
             vec![
                 Line::from(
-                    format!("Eccentricity: {}", app.system_edit.as_ref().unwrap().planets[planet_index].eccentricity.to_string())
+                    format!("Eccentricity: {}", planet_edit.eccentricity.to_string())
                 )
             ]
         ),
         ListItem::new(
             vec![
                 Line::from(
-                    format!("Orbital period: {}", app.system_edit.as_ref().unwrap().planets[planet_index].orbital_period.to_string())
+                    format!("Orbital period: {}", planet_edit.orbital_period.to_string())
                 )
             ]
         ),
         ListItem::new(
             vec![
                 Line::from(
-                    format!("Semi major axis: {}", app.system_edit.as_ref().unwrap().planets[planet_index].semi_major_axis.to_string())
+                    format!("Semi major axis: {}", planet_edit.semi_major_axis.to_string())
                 )
             ]
         ),
     ];
 
-    app.system_edit_list.size = edit_elements.len();
+    app.planet_edit_list.size = edit_elements.len();
 
     let tasks = List::new(edit_elements)
         .block(Block::default())
@@ -366,7 +354,7 @@ fn draw_edit_planet_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         )
         .highlight_symbol("> ");
 
-    f.render_stateful_widget(tasks, chunks[0], &mut app.system_edit_list.state);
+    f.render_stateful_widget(tasks, chunks[0], &mut app.planet_edit_list.state);
 
     let input = Paragraph::new(app.input.as_str())
         .style(match app.input_mode {
