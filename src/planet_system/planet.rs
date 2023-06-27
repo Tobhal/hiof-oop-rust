@@ -54,7 +54,7 @@ impl FieldEditable for Planet {
                 Err(e) => return Err(Box::new(e))
             },
             i => {
-                return Err(Box::new(NoFieldError(index)));
+                return Err(Box::new(NoFieldError(i)));
             }
         }
 

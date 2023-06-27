@@ -6,6 +6,7 @@ use std::error::Error;
 use std::thread::sleep;
 use std::time::Duration;
 use ratatui::layout::Direction;
+use crate::planet_system::center_star::CenterStar;
 use crate::planet_system::planet::Planet;
 use crate::util::ui::FieldEditable;
 
@@ -128,6 +129,8 @@ pub struct App<'a> {
     pub planet_system_edit_list: StatefulList<'a, PlanetSystem>,
 
     pub planet_edit_list: StatefulList<'a, Planet>,
+
+    pub center_star_edit_list: StatefulList<'a, CenterStar>
 }
 
 impl<'a> App<'a> {
@@ -148,8 +151,8 @@ impl<'a> App<'a> {
             popup_state: PopupMode::Hide,
 
             planet_system_edit_list: StatefulList::new_with_items(planet_system_names),
-
             planet_edit_list: StatefulList::new_with_items(planet_system_names),
+            center_star_edit_list: StatefulList::new_with_items(planet_system_names)
         }
     }
 
@@ -164,7 +167,9 @@ impl<'a> App<'a> {
             PopupMode::Planet => {
                 self.planet_edit_list.previous_size();
             }
-            PopupMode::CenterStar => {}
+            PopupMode::CenterStar => {
+                self.center_star_edit_list.previous_size();
+            }
         }
 
         Ok(())
@@ -181,7 +186,9 @@ impl<'a> App<'a> {
             PopupMode::Planet => {
                 self.planet_edit_list.next_size();
             }
-            PopupMode::CenterStar => {}
+            PopupMode::CenterStar => {
+                self.center_star_edit_list.next_size();
+            }
         }
 
         Ok(())
@@ -226,7 +233,11 @@ impl<'a> App<'a> {
                         let edit_index = self.planet_system_edit_list.state.selected().unwrap_or_default();
 
                         match edit_index {
-                            0 | 1 => self.input_mode = InputMode::Editing,
+                            0 => self.input_mode = InputMode::Editing,
+                            1 => {
+                                self.popup_state = PopupMode::CenterStar;
+                                self.center_star_edit_list.edit_element = Some(self.planet_systems[planet_system_index].center_star.clone())
+                            }
                             _ => {
                                 self.popup_state = PopupMode::Planet;
                                 self.planet_edit_list.edit_element = Some(self.planet_systems[planet_system_index].planets[edit_index-2].clone())
@@ -246,6 +257,24 @@ impl<'a> App<'a> {
                     },
                     'p' => {
                         self.planet_edit_list.state.select(Some(0));
+                        self.popup_state = PopupMode::PlanetSystem;
+                    },
+                    '\n' => {
+                        self.input_mode = InputMode::Editing;
+                    }
+                    _ => {}
+                }
+            }
+            (InputMode::Normal, PopupMode::CenterStar) => {
+                match c {
+                    'q' => self.should_quit = true,
+                    'c' => {
+                        self.planet_systems_list.state.select(Some(0));
+                        self.center_star_edit_list.state.select(Some(0));
+                        self.popup_state = PopupMode::Hide;
+                    },
+                    'p' => {
+                        self.center_star_edit_list.state.select(Some(0));
                         self.popup_state = PopupMode::PlanetSystem;
                     },
                     '\n' => {
@@ -314,6 +343,37 @@ impl<'a> App<'a> {
                             }
                         };
                         self.planet_edit_list.edit_element.as_mut().unwrap().edit_field(planet_edit_index,message.clone())?;
+
+                        self.input_mode = InputMode::Normal;
+                    }
+                    '\r' | '\u{0008}' | '.' => {
+                        self.input.pop();
+                    }
+                    '\u{001B}' | '\'' => self.input_mode = InputMode::Normal,
+                    c => self.input.push(c)
+                }
+            }
+            (InputMode::Editing, PopupMode::CenterStar) => {
+                match c {
+                    '\n' => {
+                        let message: String = self.input.drain(..).collect();
+
+                        let planet_system_index = self.planet_systems_list.state.selected().unwrap_or_default();
+                        let planet_system_edit_index = 2;
+                        let center_star_edit_index = self.center_star_edit_list.state.selected().unwrap_or_default();
+
+                        match self.planet_systems[planet_system_index].center_star.edit_field(center_star_edit_index, message.clone()) {
+                            Ok(_) => {}
+                            Err(e) => {
+                                println!("{:#?}", e.to_string());
+                                sleep(Duration::from_secs(5));
+                                self.input_mode = InputMode::Normal;
+
+                                // Return before next function is run to not print two error messages to the screen.
+                                return Ok(())
+                            }
+                        };
+                        self.center_star_edit_list.edit_element.as_mut().unwrap().edit_field(center_star_edit_index, message.clone())?;
 
                         self.input_mode = InputMode::Normal;
                     }

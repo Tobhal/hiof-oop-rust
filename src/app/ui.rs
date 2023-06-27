@@ -173,14 +173,13 @@ fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
 {
     let system_index = app.planet_systems_list.state.selected().unwrap_or_default();
 
-    if app.popup_state == PopupMode::Planet {
-        // sleep(Duration::from_secs(5));
-    }
-
     let edit_path: String = match app.popup_state {
         PopupMode::Hide => String::new(),
         PopupMode::PlanetSystem => app.planet_system_edit_list.edit_element.as_ref().unwrap().name.clone(),
-        PopupMode::CenterStar => format!("TODO!"),
+        PopupMode::CenterStar => format!("{} -> {}",
+                                     app.planet_system_edit_list.edit_element.as_ref().unwrap().name.clone(),
+                                     app.center_star_edit_list.edit_element.as_ref().unwrap().name.clone()
+        ),
         PopupMode::Planet => format!("{} -> {}",
                                      app.planet_system_edit_list.edit_element.as_ref().unwrap().name.clone(),
                                      app.planet_edit_list.edit_element.as_ref().unwrap().name.clone()
@@ -188,7 +187,7 @@ fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     };
 
     let block = Block::default()
-        .title(format!("Edit {}", edit_path))
+        .title(format!("Edit: {}", edit_path))
         .borders(Borders::ALL);
 
     let popup_area = centered_rect(60, 60, f.size());
@@ -212,7 +211,7 @@ fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         match app.popup_state {
             PopupMode::Hide => {}
             PopupMode::PlanetSystem => draw_edit_planet_system_list(f, app, &chunks),
-            PopupMode::CenterStar => {}
+            PopupMode::CenterStar => draw_edit_center_start_list(f, app, &chunks),
             PopupMode::Planet => draw_edit_planet_list(f, app, &chunks),
         }
 
@@ -308,6 +307,32 @@ fn draw_edit_planet_list<B>(f: &mut Frame<B>, app: &mut App, chunks: &Rc<[Rect]>
         .highlight_symbol("> ");
 
     f.render_stateful_widget(tasks, chunks[0], &mut app.planet_edit_list.state);
+}
+
+fn draw_edit_center_start_list<B>(f: &mut Frame<B>, app: &mut App, chunks: &Rc<[Rect]>)
+    where
+        B: Backend,
+{
+    // Draw tasks
+    let edit_elements: Vec<ListItem> = app.center_star_edit_list.edit_element
+        .as_ref()
+        .unwrap()
+        .get_field()
+        .iter()
+        .map(|field| ListItem::new(
+            Line::from(format!("{}: {}", field.name, field.value))
+        )).collect();
+
+    app.center_star_edit_list.size = edit_elements.len();
+
+    let tasks = List::new(edit_elements)
+        .block(Block::default())
+        .highlight_style(Style::default()
+            .add_modifier(Modifier::BOLD)
+        )
+        .highlight_symbol("> ");
+
+    f.render_stateful_widget(tasks, chunks[0], &mut app.center_star_edit_list.state);
 }
 
 /*
