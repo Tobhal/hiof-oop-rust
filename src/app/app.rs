@@ -6,6 +6,7 @@ use std::error::Error;
 use std::thread::sleep;
 use std::time::Duration;
 use ratatui::layout::Direction;
+use termion::event::Key;
 use crate::planet_system::center_star::CenterStar;
 use crate::planet_system::planet::Planet;
 use crate::util::ui::FieldEditable;
@@ -19,6 +20,7 @@ impl<'a> TabsState<'a> {
     pub fn new(titles: Vec<&'a str>) -> TabsState {
         TabsState { titles, index: 0 }
     }
+
     pub fn next(&mut self) {
         self.index = (self.index + 1) % self.titles.len();
     }
@@ -97,7 +99,7 @@ impl<'l, E> StatefulList<'l, E> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum InputMode {
     Normal,
     Editing
@@ -127,9 +129,7 @@ pub struct App<'a> {
     pub popup_state: PopupMode,
 
     pub planet_system_edit_list: StatefulList<'a, PlanetSystem>,
-
     pub planet_edit_list: StatefulList<'a, Planet>,
-
     pub center_star_edit_list: StatefulList<'a, CenterStar>
 }
 
@@ -211,7 +211,6 @@ impl<'a> App<'a> {
             (InputMode::Normal, PopupMode::Hide) => {
                 match c {
                     'q' => self.should_quit = true,
-                    'c' => self.popup_state = PopupMode::Hide,
                     '\n' => {
                         let index = self.planet_systems_list.state.selected().unwrap_or_default();
 
@@ -224,7 +223,7 @@ impl<'a> App<'a> {
             (InputMode::Normal, PopupMode::PlanetSystem) => {
                 match c {
                     'q' => self.should_quit = true,
-                    'c' | 'p' => {
+                    'c' => {
                         self.planet_system_edit_list.state.select(Some(0));
                         self.popup_state = PopupMode::Hide;
                     },
@@ -255,10 +254,6 @@ impl<'a> App<'a> {
                         self.planet_edit_list.state.select(Some(0));
                         self.popup_state = PopupMode::Hide;
                     },
-                    'p' => {
-                        self.planet_edit_list.state.select(Some(0));
-                        self.popup_state = PopupMode::PlanetSystem;
-                    },
                     '\n' => {
                         self.input_mode = InputMode::Editing;
                     }
@@ -272,10 +267,6 @@ impl<'a> App<'a> {
                         self.planet_systems_list.state.select(Some(0));
                         self.center_star_edit_list.state.select(Some(0));
                         self.popup_state = PopupMode::Hide;
-                    },
-                    'p' => {
-                        self.center_star_edit_list.state.select(Some(0));
-                        self.popup_state = PopupMode::PlanetSystem;
                     },
                     '\n' => {
                         self.input_mode = InputMode::Editing;
@@ -306,19 +297,14 @@ impl<'a> App<'a> {
                                 planet_system.center_star.name = message.clone();
                                 planet_system_edit.center_star.name = message.clone();
                             },
-                            2..=100 => {
+                            _ => {
                                 planet_system.planets[edit_index-2].name = message.clone();
                                 planet_system_edit.planets[edit_index-2].name = message.clone();
                             }
-                            _ => {}
                         }
 
                         self.input_mode = InputMode::Normal;
                     },
-                    '\r' | '\u{0008}' | '.' => {
-                        self.input.pop();
-                    }
-                    '\u{001B}' | '\'' => self.input_mode = InputMode::Normal,
                     c => self.input.push(c)
                 }
             }
@@ -345,12 +331,8 @@ impl<'a> App<'a> {
                         self.planet_edit_list.edit_element.as_mut().unwrap().edit_field(planet_edit_index,message.clone())?;
 
                         self.input_mode = InputMode::Normal;
-                    }
-                    '\r' | '\u{0008}' | '.' => {
-                        self.input.pop();
-                    }
-                    '\u{001B}' | '\'' => self.input_mode = InputMode::Normal,
-                    c => self.input.push(c)
+                    },
+                    c => self.input.push(c),
                 }
             }
             (InputMode::Editing, PopupMode::CenterStar) => {
@@ -359,7 +341,6 @@ impl<'a> App<'a> {
                         let message: String = self.input.drain(..).collect();
 
                         let planet_system_index = self.planet_systems_list.state.selected().unwrap_or_default();
-                        let planet_system_edit_index = 2;
                         let center_star_edit_index = self.center_star_edit_list.state.selected().unwrap_or_default();
 
                         match self.planet_systems[planet_system_index].center_star.edit_field(center_star_edit_index, message.clone()) {
@@ -376,15 +357,39 @@ impl<'a> App<'a> {
                         self.center_star_edit_list.edit_element.as_mut().unwrap().edit_field(center_star_edit_index, message.clone())?;
 
                         self.input_mode = InputMode::Normal;
-                    }
-                    '\r' | '\u{0008}' | '.' => {
-                        self.input.pop();
-                    }
-                    '\u{001B}' | '\'' => self.input_mode = InputMode::Normal,
+                    },
                     c => self.input.push(c)
                 }
             }
             _ => {}
+        }
+
+        Ok(())
+    }
+
+    pub fn on_backspace(&mut self) -> Result<(), Box<dyn Error>> {
+        match self.input_mode {
+            InputMode::Normal => {}
+            InputMode::Editing => {
+                self.input.pop();
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn on_esc(&mut self) -> Result<(), Box<dyn Error>> {
+        match self.input_mode {
+            InputMode::Normal => {
+                match self.popup_state {
+                    PopupMode::Hide => {}
+                    PopupMode::PlanetSystem => self.popup_state = PopupMode::Hide,
+                    PopupMode::CenterStar | PopupMode::Planet => self.popup_state = PopupMode::PlanetSystem,
+                }
+            }
+            InputMode::Editing => {
+                self.input_mode = InputMode::Normal
+            }
         }
 
         Ok(())

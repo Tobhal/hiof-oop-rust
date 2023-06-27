@@ -51,11 +51,7 @@ fn draw_status_line<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
             Span::from(" | "),
             Span::from("'enter' = select/edit"),
             Span::from(" | "),
-            Span::from("'\'' = exit edit"),
-            Span::from(" | "),
-            Span::from("'.' = backspace"),
-            Span::from(" | "),
-            Span::from("'p' = reduce popup state"),
+            Span::from("'esc' = cancel"),
             Span::from(" | "),
             Span::from("'c' = close popup"),
         ]),
@@ -106,8 +102,8 @@ fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         .direction(Direction::Horizontal)
         .constraints(
             [
-                Constraint::Percentage(75),
-                Constraint::Percentage(25),
+                Constraint::Percentage(60),
+                Constraint::Percentage(40),
             ]
                 .as_ref(),
         )

@@ -54,6 +54,8 @@ fn run_app<B: Backend>(
                 Key::Down => app.on_down(),
                 Key::Left => app.on_left(),
                 Key::Right => app.on_right(),
+                Key::Backspace => app.on_backspace(),
+                Key::Esc => app.on_esc(),
                 _ => {Ok(())}
             },
             Event::Tick => app.on_tick(),
