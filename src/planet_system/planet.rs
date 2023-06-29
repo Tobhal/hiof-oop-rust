@@ -1,8 +1,13 @@
-use std::error::Error;
-use std::thread::sleep;
-use std::time::Duration;
-use crate::planet_system::moon::Moon;
-use crate::util::ui::{FieldEditable, NoFieldError, Field};
+use std::{
+    error::Error,
+    thread::sleep,
+    time::Duration
+};
+
+use crate::{
+    planet_system::moon::Moon,
+    util::ui::{FieldEditable, NoFieldError, Field}
+};
 
 #[derive(Debug, Clone)]
 pub struct Planet {

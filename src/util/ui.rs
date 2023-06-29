@@ -1,5 +1,7 @@
-use std::error::Error;
-use std::fmt;
+use std::{
+    error::Error,
+    fmt
+};
 
 pub struct NoFieldError(pub usize);
 

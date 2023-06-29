@@ -1,5 +1,9 @@
-use crate::planet_system::center_star::CenterStar;
-use crate::planet_system::planet::Planet;
+use crate::{
+    planet_system::{
+        center_star::CenterStar,
+        planet::Planet,
+    }
+};
 
 pub struct PlanetSystemsCSV {
     pub name: String,

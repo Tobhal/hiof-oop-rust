@@ -1,13 +1,17 @@
-use std::collections::HashMap;
-use std::mem;
-use std::sync::Arc;
-use crate::planet_system::{
-    center_star::CenterStar,
-    planet::Planet,
-    moon::Moon,
-    planet_system_csv::PlanetSystemsCSV
+use std::{
+    collections::HashMap,
+    mem,
 };
-use crate::util::file_reader::read_lines;
+
+use crate::{
+    planet_system::{
+        center_star::CenterStar,
+        planet::Planet,
+        moon::Moon,
+        planet_system_csv::PlanetSystemsCSV
+    },
+    util::file_reader::read_lines,
+};
 
 pub enum Types {
     CenterStar(CenterStar),

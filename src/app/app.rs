@@ -1,14 +1,21 @@
-use ratatui::widgets::{ListItem, ListState};
-use crate::planet_system::planet_system::PlanetSystem;
-
-use std::{thread, time};
-use std::error::Error;
-use std::thread::sleep;
-use std::time::Duration;
-use ratatui::layout::Direction;
+use ratatui::{
+    widgets::{ListItem, ListState},
+    layout::Direction
+};
+use std::{
+    thread,
+    time,
+    time::Duration,
+    error::Error,
+    thread::sleep,
+};
 use termion::event::Key;
-use crate::planet_system::center_star::CenterStar;
-use crate::planet_system::planet::Planet;
+
+use crate::planet_system::{
+    planet_system::PlanetSystem,
+    center_star::CenterStar,
+    planet::Planet,
+};
 use crate::util::ui::FieldEditable;
 
 pub struct TabsState<'a> {
@@ -55,23 +62,21 @@ impl<'l, E> StatefulList<'l, E> {
     }
 
     pub fn next(&mut self) {
-        let i = match self.state.selected() {
+        self.state.select(Some(match self.state.selected() {
             Some(i) => (i + 1) % self.items.len(),
             None => 0,
-        };
-        self.state.select(Some(i));
+        }));
     }
 
     pub fn next_size(&mut self) {
-        let i = match self.state.selected() {
+        self.state.select(Some(match self.state.selected() {
             Some(i) => (i + 1) % self.size,
             None => 0,
-        };
-        self.state.select(Some(i));
+        }));
     }
 
     pub fn previous(&mut self) {
-        let i = match self.state.selected() {
+        self.state.select(Some(match self.state.selected() {
             Some(i) => {
                 if i == 0 {
                     self.items.len() - 1
@@ -80,12 +85,11 @@ impl<'l, E> StatefulList<'l, E> {
                 }
             }
             None => 0,
-        };
-        self.state.select(Some(i));
+        }));
     }
 
     pub fn previous_size(&mut self) {
-        let i = match self.state.selected() {
+        self.state.select(Some(match self.state.selected() {
             Some(i) => {
                 if i == 0 {
                     self.size - 1
@@ -94,8 +98,7 @@ impl<'l, E> StatefulList<'l, E> {
                 }
             }
             None => 0,
-        };
-        self.state.select(Some(i));
+        }));
     }
 }
 

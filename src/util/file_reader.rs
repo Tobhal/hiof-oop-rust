@@ -1,8 +1,7 @@
-use std::fs::File;
-use std::io;
-use std::io::{
-    BufRead,
-    BufReader
+use std::{
+    fs::File,
+    io,
+    io::{BufReader, BufRead}
 };
 
 pub fn read_lines(file_name: String) -> io::Lines<BufReader<File>> {

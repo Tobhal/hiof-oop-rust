@@ -1,0 +1,114 @@
+use ratatui::{
+    backend::Backend,
+    Frame,
+    layout::{Constraint, Direction, Layout, Rect},
+    style::{Modifier, Style},
+    text::{Line, Span},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Wrap},
+};
+
+use crate::app::app::App;
+
+pub fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+    where
+        B: Backend,
+{
+    let index = app.planet_systems_list.state.selected().unwrap_or_default();
+
+    let chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(
+            [
+                Constraint::Percentage(60),
+                Constraint::Percentage(40),
+            ]
+                .as_ref(),
+        )
+        .split(area);
+
+    let block = Block::default()
+        .title("Content")
+        .borders(Borders::ALL)
+        .style(Style::default());
+
+    f.render_widget(block, chunks[1]);
+
+    draw_list(f, app, chunks[0]);
+    draw_planet_system_info(f, app, chunks[1], index);
+
+
+}
+
+pub fn draw_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
+    where
+        B: Backend,
+{
+    let chunks = Layout::default()
+        .constraints([Constraint::Percentage(90)])
+        .direction(Direction::Horizontal)
+        .split(area);
+
+    let mut planet_system_names: Vec<String> = vec![];
+
+    app.planet_systems.iter()
+        .for_each(|s| planet_system_names.push(s.name.clone()));
+
+    // Draw tasks
+    let tasks: Vec<ListItem> = planet_system_names
+        .iter()
+        .map(|p| ListItem::new(vec![Line::from(Span::raw(p))]))
+        .collect();
+
+    let tasks = List::new(tasks)
+        .block(Block::default()
+            .borders(Borders::ALL)
+            .title("Systems")
+        )
+        .highlight_style(Style::default()
+            .add_modifier(Modifier::BOLD)
+        )
+        .highlight_symbol("> ");
+
+    f.render_stateful_widget(tasks, chunks[0], &mut app.planet_systems_list.state);
+}
+
+
+/*
+Draw info
+ */
+pub fn draw_planet_system_info<B>(f: &mut Frame<B>, app: &mut App, area: Rect, index: usize)
+    where
+        B: Backend,
+{
+    let planet_system = app.planet_systems[index].clone();
+
+    let mut text = vec![
+        // Line::from(index.to_string()),
+        Line::from(planet_system.clone().name),
+        Line::from(vec![
+            Span::from("- Center star: "),
+            Span::from(planet_system.center_star.name.clone().to_string())
+        ]),
+        Line::from(vec![
+            Span::from(format!("- Num planets ({}): ", planet_system.planets.len().to_string())),
+        ]),
+    ];
+
+    planet_system.planets.iter()
+        .for_each(|p| text.push(Line::from(format!("- - {}", p.name.clone()))));
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .title(Span::styled(
+            "System info",
+            Style::default()
+        ));
+
+    let paragraph = Paragraph::new(text)
+        .block(block)
+        .wrap(Wrap {
+            trim: true
+        });
+
+    f.render_widget(paragraph, area);
+}
