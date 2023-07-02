@@ -85,7 +85,7 @@ pub fn draw_edit_planet_system_list<B>(f: &mut Frame<B>, app: &mut App, chunks: 
         .collect();
 
     // Draw tasks
-    let mut edit_elements: Vec<ListItem> =  vec![
+    let mut edit_elements: Vec<ListItem> = vec![
         ListItem::new(
             vec![
                 Line::from(
@@ -136,7 +136,8 @@ pub fn draw_edit_planet_list<B>(f: &mut Frame<B>, app: &mut App, chunks: &Rc<[Re
         .iter()
         .map(|field| ListItem::new(
             Line::from(format!("{}: {}", field.name, field.value))
-        )).collect();
+        ))
+        .collect();
 
     app.planet_edit_list.size = edit_elements.len();
 
@@ -162,7 +163,8 @@ pub fn draw_edit_center_start_list<B>(f: &mut Frame<B>, app: &mut App, chunks: &
         .iter()
         .map(|field| ListItem::new(
             Line::from(format!("{}: {}", field.name, field.value))
-        )).collect();
+        ))
+        .collect();
 
     app.center_star_edit_list.size = edit_elements.len();
 
