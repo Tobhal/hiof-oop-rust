@@ -1,6 +1,8 @@
-use std::rc::Rc;
-use std::thread::sleep;
-use std::time::Duration;
+use std::{
+    rc::Rc,
+    thread::sleep,
+    time::Duration
+};
 
 use ratatui::{
     backend::Backend,
@@ -12,13 +14,13 @@ use ratatui::{
 };
 
 use crate::{
-    app::{
-        app::{App, InputMode, PopupMode},
-        views::popup_util::centered_rect
+    app::app::App,
+    util::{
+        ui::FieldEditable,
+        popup::{centered_rect, draw_input},
+        state::states::{PopupMode, InputMode}
     },
-    util::ui::FieldEditable,
 };
-use crate::app::views::popup_util::draw_input;
 
 pub fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
@@ -39,14 +41,15 @@ pub fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         _ => String::new(),
     };
 
-    let block = Block::default()
-        .title(format!("Edit: {}", edit_path))
-        .borders(Borders::ALL);
-
     let popup_area = centered_rect(60, 60, f.size());
 
     f.render_widget(Clear, popup_area); //this clears out the background
-    f.render_widget(block, popup_area);
+    f.render_widget(
+        Block::default()
+        .title(format!("Edit: {}", edit_path))
+        .borders(Borders::ALL),
+        popup_area
+    );
 
     let chunks = Layout::default()
         .direction(Direction::Vertical)
