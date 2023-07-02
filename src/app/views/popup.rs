@@ -84,33 +84,15 @@ pub fn draw_edit_planet_system_list<B>(f: &mut Frame<B>, app: &mut App, chunks: 
         .map(|ps| ps.name.clone())
         .collect();
 
-    // Draw tasks
-    let mut edit_elements: Vec<ListItem> = vec![
-        ListItem::new(
-            vec![
-                Line::from(
-                    format!("Name: {}", app.planet_system_edit_list.edit_element.as_ref().unwrap().name.to_string())
-                )
-            ]
-        ),
-        ListItem::new(
-            vec![
-                Line::from(
-                    format!("Center star name: {}", app.planet_system_edit_list.edit_element.as_ref().unwrap().center_star.name.to_string())
-                )
-            ]
-        ),
-    ];
-
-    app.planet_system_edit_list.edit_element.as_ref().unwrap().planets
+    let edit_elements: Vec<ListItem> = app.planet_system_edit_list.edit_element
+        .as_ref()
+        .unwrap()
+        .get_field()
         .iter()
-        .for_each(|p| edit_elements.push(ListItem::new(
-            vec![
-                Line::from(
-                    format!("Planet: {}", p.name)
-                )
-            ]
-        )));
+        .map(|field| ListItem::new(
+            Line::from(format!("{}: {}", field.name, field.value))
+        ))
+        .collect();
 
     app.planet_system_edit_list.size = edit_elements.len();
 

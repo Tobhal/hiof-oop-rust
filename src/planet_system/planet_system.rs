@@ -2,6 +2,7 @@ use std::{
     collections::HashMap,
     mem,
 };
+use std::error::Error;
 
 use crate::{
     planet_system::{
@@ -12,6 +13,7 @@ use crate::{
     },
     util::file_reader::read_lines,
 };
+use crate::util::ui::{Field, FieldEditable, NoFieldError};
 
 pub enum Types {
     CenterStar(CenterStar),
@@ -92,3 +94,29 @@ impl PlanetSystem {
     }
 }
 
+impl FieldEditable for PlanetSystem {
+    fn edit_field(&mut self, index: usize, value: String) -> Result<(), Box<dyn Error>> {
+        match index {
+            0 => self.name = value,
+            i => {
+                return Err(Box::new(NoFieldError(i)));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn get_field(&self) -> Vec<Field> {
+        let mut fields = vec![
+            Field { name: "Name", value: self.name.to_string() },
+            Field { name: "Center star", value: self.center_star.name.to_string() },
+        ];
+
+        self.planets.iter()
+            .for_each(|p| fields.push(
+                Field { name: "Planet", value: p.name.to_string() }
+            ));
+
+        fields
+    }
+}
