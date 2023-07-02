@@ -35,31 +35,22 @@ pub fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
 
     draw_list(f, app, chunks[0]);
     draw_planet_system_info(f, app, chunks[1], index);
-
-
 }
 
 pub fn draw_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
         B: Backend,
 {
-    let chunks = Layout::default()
-        .constraints([Constraint::Percentage(90)])
-        .direction(Direction::Horizontal)
-        .split(area);
+    let planet_system_names: Vec<String> = app.planet_systems.iter()
+        .map(|ps| ps.name.clone())
+        .collect();
 
-    let mut planet_system_names: Vec<String> = vec![];
-
-    app.planet_systems.iter()
-        .for_each(|s| planet_system_names.push(s.name.clone()));
-
-    // Draw tasks
-    let tasks: Vec<ListItem> = planet_system_names
+    let list_elements: Vec<ListItem> = planet_system_names
         .iter()
         .map(|p| ListItem::new(vec![Line::from(Span::raw(p))]))
         .collect();
 
-    let tasks = List::new(tasks)
+    let list = List::new(list_elements)
         .block(Block::default()
             .borders(Borders::ALL)
             .title("Systems")
@@ -69,9 +60,8 @@ pub fn draw_list<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         )
         .highlight_symbol("> ");
 
-    f.render_stateful_widget(tasks, chunks[0], &mut app.planet_systems_list.state);
+    f.render_stateful_widget(list, area, &mut app.planet_systems_list.state);
 }
-
 
 /*
 Draw info

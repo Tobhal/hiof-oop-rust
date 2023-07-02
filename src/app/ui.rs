@@ -4,7 +4,6 @@ use std::{
     thread::sleep,
     time::Duration
 };
-
 use ratatui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -13,7 +12,6 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Wrap, Clear},
     Frame,
 };
-
 use crate::{
     app::{
         views::{
@@ -24,6 +22,7 @@ use crate::{
     },
     util::ui::FieldEditable
 };
+use crate::app::views::find::draw_find_popup;
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let chunks = Layout::default()
@@ -45,9 +44,14 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         _ => {}
     };
 
-    if app.popup_state != PopupMode::Hide {
-        draw_popup(f, app, f.size())
+    match app.popup_state {
+        PopupMode::PlanetSystem | PopupMode::CenterStar | PopupMode::Planet => {
+            draw_popup(f, app, f.size())
+        },
+        PopupMode::Find => draw_find_popup(f, app, f.size()),
+        _ => {}
     }
+
 }
 
 /*
@@ -66,6 +70,8 @@ fn draw_status_line<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
             Span::from("'esc' = cancel"),
             Span::from(" | "),
             Span::from("'c' = close popup"),
+            Span::from(" | "),
+            Span::from("'f' = find"),
         ]),
     ];
 
@@ -99,14 +105,5 @@ fn draw_tabs<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
             .add_modifier(Modifier::BOLD))
         .select(app.tabs.index);
 
-    // draw_test(f, app, chunks[0]);
-
     f.render_widget(tabs, area);
 }
-
-
-
-/*
-Draw lists
- */
-

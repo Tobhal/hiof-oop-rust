@@ -114,6 +114,7 @@ pub enum PopupMode {
     PlanetSystem,
     CenterStar,
     Planet,
+    Find
 }
 
 pub struct App<'a> {
@@ -133,7 +134,9 @@ pub struct App<'a> {
 
     pub planet_system_edit_list: StatefulList<'a, PlanetSystem>,
     pub planet_edit_list: StatefulList<'a, Planet>,
-    pub center_star_edit_list: StatefulList<'a, CenterStar>
+    pub center_star_edit_list: StatefulList<'a, CenterStar>,
+
+    pub find_list: StatefulList<'a, PlanetSystem>
 }
 
 impl<'a> App<'a> {
@@ -155,7 +158,9 @@ impl<'a> App<'a> {
 
             planet_system_edit_list: StatefulList::new_with_items(planet_system_names),
             planet_edit_list: StatefulList::new_with_items(planet_system_names),
-            center_star_edit_list: StatefulList::new_with_items(planet_system_names)
+            center_star_edit_list: StatefulList::new_with_items(planet_system_names),
+
+            find_list: StatefulList::new_with_items(planet_system_names)
         }
     }
 
@@ -172,6 +177,9 @@ impl<'a> App<'a> {
             }
             PopupMode::CenterStar => {
                 self.center_star_edit_list.previous_size();
+            }
+            PopupMode::Find => {
+                self.find_list.previous_size();
             }
         }
 
@@ -191,6 +199,9 @@ impl<'a> App<'a> {
             }
             PopupMode::CenterStar => {
                 self.center_star_edit_list.next_size();
+            }
+            PopupMode::Find => {
+                self.find_list.next_size();
             }
         }
 
@@ -214,6 +225,13 @@ impl<'a> App<'a> {
             (InputMode::Normal, PopupMode::Hide) => {
                 match c {
                     'q' => self.should_quit = true,
+                    'f' => {
+                        self.find_list.state.select(Some(0));
+                        self.input = String::new();
+
+                        self.popup_state = PopupMode::Find;
+                        self.input_mode = InputMode::Editing;
+                    },
                     '\n' => {
                         let index = self.planet_systems_list.state.selected().unwrap_or_default();
 
@@ -273,6 +291,15 @@ impl<'a> App<'a> {
                     },
                     '\n' => {
                         self.input_mode = InputMode::Editing;
+                    }
+                    _ => {}
+                }
+            }
+            (InputMode::Normal, PopupMode::Find) => {
+                match c {
+                    'q' => self.should_quit = true,
+                    '\n' => {
+                        todo!("Select planet system");
                     }
                     _ => {}
                 }
@@ -364,6 +391,27 @@ impl<'a> App<'a> {
                     c => self.input.push(c)
                 }
             }
+            (InputMode::Editing, PopupMode::Find) => {
+                match c {
+                    '\n' => {
+                        let planet_system: Vec<(usize, String)> = self.planet_systems.iter().enumerate()
+                            .filter(|(i, ps)| ps.name.contains(self.input.as_str()) || self.input.is_empty())
+                            .map(|(i, ps)| (i, ps.name.clone()))
+                            .collect();
+
+                        let index = planet_system[self.find_list.state.selected().unwrap_or_default()].0;
+
+                        self.planet_system_edit_list.edit_element = Some(self.planet_systems[index].clone());
+                        self.planet_systems_list.state.select(Some(index));
+
+                        self.input_mode = InputMode::Normal;
+                        self.popup_state = PopupMode::PlanetSystem;
+                    }
+                    c => {
+                        self.input.push(c);
+                    }
+                }
+            }
             _ => {}
         }
 
@@ -388,6 +436,7 @@ impl<'a> App<'a> {
                     PopupMode::Hide => {}
                     PopupMode::PlanetSystem => self.popup_state = PopupMode::Hide,
                     PopupMode::CenterStar | PopupMode::Planet => self.popup_state = PopupMode::PlanetSystem,
+                    PopupMode::Find => self.popup_state = PopupMode::Hide
                 }
             }
             InputMode::Editing => {

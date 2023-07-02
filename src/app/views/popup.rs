@@ -1,4 +1,6 @@
 use std::rc::Rc;
+use std::thread::sleep;
+use std::time::Duration;
 
 use ratatui::{
     backend::Backend,
@@ -10,9 +12,13 @@ use ratatui::{
 };
 
 use crate::{
-    app::app::{App, InputMode, PopupMode},
-    util::ui::FieldEditable
+    app::{
+        app::{App, InputMode, PopupMode},
+        views::popup_util::centered_rect
+    },
+    util::ui::FieldEditable,
 };
+use crate::app::views::popup_util::draw_input;
 
 pub fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
@@ -21,7 +27,6 @@ pub fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     let system_index = app.planet_systems_list.state.selected().unwrap_or_default();
 
     let edit_path: String = match app.popup_state {
-        PopupMode::Hide => String::new(),
         PopupMode::PlanetSystem => app.planet_system_edit_list.edit_element.as_ref().unwrap().name.clone(),
         PopupMode::CenterStar => format!("{} -> {}",
                                          app.planet_system_edit_list.edit_element.as_ref().unwrap().name.clone(),
@@ -30,7 +35,8 @@ pub fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         PopupMode::Planet => format!("{} -> {}",
                                      app.planet_system_edit_list.edit_element.as_ref().unwrap().name.clone(),
                                      app.planet_edit_list.edit_element.as_ref().unwrap().name.clone()
-        )
+        ),
+        _ => String::new(),
     };
 
     let block = Block::default()
@@ -42,35 +48,26 @@ pub fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     f.render_widget(Clear, popup_area); //this clears out the background
     f.render_widget(block, popup_area);
 
-    if app.popup_state != PopupMode::Hide {
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .margin(1)
-            .constraints(
-                [
-                    Constraint::Min(1),
-                    Constraint::Length(3),
-                ]
-                    .as_ref(),
-            )
-            .split(popup_area);
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(1)
+        .constraints(
+            [
+                Constraint::Min(1),
+                Constraint::Length(3),
+            ]
+                .as_ref(),
+        )
+        .split(popup_area);
 
-        match app.popup_state {
-            PopupMode::Hide => {}
-            PopupMode::PlanetSystem => draw_edit_planet_system_list(f, app, &chunks),
-            PopupMode::CenterStar => draw_edit_center_start_list(f, app, &chunks),
-            PopupMode::Planet => draw_edit_planet_list(f, app, &chunks),
-        }
-
-        let input = Paragraph::new(app.input.as_str())
-            .style(match app.input_mode {
-                InputMode::Normal => Style::default(),
-                InputMode::Editing => Style::default().fg(Color::Yellow),
-            })
-            .block(Block::default().borders(Borders::ALL).title("Input"));
-
-        f.render_widget(input, chunks[1]);
+    match app.popup_state {
+        PopupMode::PlanetSystem => draw_edit_planet_system_list(f, app, &chunks),
+        PopupMode::CenterStar => draw_edit_center_start_list(f, app, &chunks),
+        PopupMode::Planet => draw_edit_planet_list(f, app, &chunks),
+        _ => {}
     }
+
+    draw_input(f, app, chunks[1]);
 }
 
 /*
@@ -80,18 +77,12 @@ pub fn draw_edit_planet_system_list<B>(f: &mut Frame<B>, app: &mut App, chunks: 
     where
         B: Backend,
 {
-    let mut planet_system_names: Vec<String> = vec![];
-
-    app.planet_systems.iter()
-        .for_each(|s| planet_system_names.push(s.name.clone()));
-
-    // Draw tasks
-    let mut edit_elements: Vec<ListItem> = planet_system_names
-        .iter()
-        .map(|p| ListItem::new(vec![Line::from(Span::raw(p))]))
+    let planet_system_names: Vec<String> = app.planet_systems.iter()
+        .map(|ps| ps.name.clone())
         .collect();
 
-    edit_elements = vec![
+    // Draw tasks
+    let mut edit_elements: Vec<ListItem> =  vec![
         ListItem::new(
             vec![
                 Line::from(
@@ -182,29 +173,3 @@ pub fn draw_edit_center_start_list<B>(f: &mut Frame<B>, app: &mut App, chunks: &
     f.render_stateful_widget(tasks, chunks[0], &mut app.center_star_edit_list.state);
 }
 
-/// helper function to create a centered rect using up certain percentage of the available rect `r`
-pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
-    let popup_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(
-            [
-                Constraint::Percentage((100 - percent_y) / 2),
-                Constraint::Percentage(percent_y),
-                Constraint::Percentage((100 - percent_y) / 2),
-            ]
-                .as_ref(),
-        )
-        .split(r);
-
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(
-            [
-                Constraint::Percentage((100 - percent_x) / 2),
-                Constraint::Percentage(percent_x),
-                Constraint::Percentage((100 - percent_x) / 2),
-            ]
-                .as_ref(),
-        )
-        .split(popup_layout[1])[1]
-}
