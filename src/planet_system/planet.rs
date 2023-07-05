@@ -9,7 +9,7 @@ use crate::{
     util::ui::{FieldEditable, NoFieldError, Field}
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Planet {
     pub name: String,
     pub mass: f32,

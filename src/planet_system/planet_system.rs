@@ -36,7 +36,7 @@ impl From<Vec<String>> for Types {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct PlanetSystem {
     pub name: String,
     pub center_star: CenterStar,
