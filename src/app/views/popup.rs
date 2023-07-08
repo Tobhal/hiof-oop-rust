@@ -12,6 +12,7 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, Clear, List, ListItem, Paragraph}
 };
+use ratatui::layout::Constraint::Min;
 
 use crate::{
     app::app::App,
@@ -24,7 +25,7 @@ use crate::{
 
 pub fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     where
-        B: Backend
+        B: Backend,
 {
     let system_index = app.planet_systems_list.state.selected().unwrap_or_default();
 
@@ -63,100 +64,45 @@ pub fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         )
         .split(popup_area);
 
-    match app.popup_state {
-        PopupMode::PlanetSystem => draw_edit_planet_system_list(f, app, &chunks),
-        PopupMode::CenterStar => draw_edit_center_start_list(f, app, &chunks),
-        PopupMode::Planet => draw_edit_planet_list(f, app, &chunks),
-        _ => {}
-    }
+    let (edit_elements, state) = match app.popup_state {
+        PopupMode::PlanetSystem => {
+            let ell = get_elements(app.planet_system_edit_list.edit_element.as_ref());
+            app.planet_system_edit_list.size = ell.len();
+            (ell, &mut app.planet_system_edit_list.state)
+        },
+        PopupMode::CenterStar => {
+            let ell = get_elements(app.center_star_edit_list.edit_element.as_ref());
+            app.center_star_edit_list.size = ell.len();
+            (ell, &mut app.center_star_edit_list.state)
+        },
+        PopupMode::Planet => {
+            let ell = get_elements(app.planet_edit_list.edit_element.as_ref());
+            app.planet_edit_list.size = ell.len();
+            (ell, &mut app.planet_edit_list.state)
+        },
+        _ => (vec![], &mut app.planet_system_edit_list.state)
+    };
+
+    f.render_stateful_widget(get_tasks(edit_elements), chunks[0], state);
 
     draw_input(f, app, chunks[1]);
 }
 
-/*
-Draw edit list
- */
-pub fn draw_edit_planet_system_list<B>(f: &mut Frame<B>, app: &mut App, chunks: &Rc<[Rect]>)
-    where
-        B: Backend,
-{
-    let planet_system_names: Vec<String> = app.planet_systems.iter()
-        .map(|ps| ps.name.clone())
-        .collect();
-
-    let edit_elements: Vec<ListItem> = app.planet_system_edit_list.edit_element
-        .as_ref()
-        .unwrap()
-        .get_field()
-        .iter()
-        .map(|field| ListItem::new(
-            Line::from(format!("{}: {}", field.name, field.value))
+fn get_elements<T: FieldEditable>(element: Option<&T>) -> Vec<ListItem<'static>> {
+    element.unwrap().get_field().iter()
+        .map(|f| ListItem::new(
+            Line::from(format!("{}: {}", f.name, f.value))
         ))
-        .collect();
-
-    app.planet_system_edit_list.size = edit_elements.len();
-
-    let tasks = List::new(edit_elements)
-        .block(Block::default())
-        .highlight_style(Style::default()
-            .add_modifier(Modifier::BOLD)
-        )
-        .highlight_symbol("> ");
-
-    f.render_stateful_widget(tasks, chunks[0], &mut app.planet_system_edit_list.state);
+        .collect()
 }
 
-pub fn draw_edit_planet_list<B>(f: &mut Frame<B>, app: &mut App, chunks: &Rc<[Rect]>)
-    where
-        B: Backend,
-{
-    // Draw tasks
-    let edit_elements: Vec<ListItem> = app.planet_edit_list.edit_element
-        .as_ref()
-        .unwrap()
-        .get_field()
-        .iter()
-        .map(|field| ListItem::new(
-            Line::from(format!("{}: {}", field.name, field.value))
-        ))
-        .collect();
-
-    app.planet_edit_list.size = edit_elements.len();
-
-    let tasks = List::new(edit_elements)
+fn get_tasks(tasks: Vec<ListItem>) -> List {
+    List::new(tasks)
         .block(Block::default())
-        .highlight_style(Style::default()
-            .add_modifier(Modifier::BOLD)
+        .highlight_style(
+            Style::default()
+                .add_modifier(Modifier::BOLD)
         )
-        .highlight_symbol("> ");
-
-    f.render_stateful_widget(tasks, chunks[0], &mut app.planet_edit_list.state);
-}
-
-pub fn draw_edit_center_start_list<B>(f: &mut Frame<B>, app: &mut App, chunks: &Rc<[Rect]>)
-    where
-        B: Backend,
-{
-    // Draw tasks
-    let edit_elements: Vec<ListItem> = app.center_star_edit_list.edit_element
-        .as_ref()
-        .unwrap()
-        .get_field()
-        .iter()
-        .map(|field| ListItem::new(
-            Line::from(format!("{}: {}", field.name, field.value))
-        ))
-        .collect();
-
-    app.center_star_edit_list.size = edit_elements.len();
-
-    let tasks = List::new(edit_elements)
-        .block(Block::default())
-        .highlight_style(Style::default()
-            .add_modifier(Modifier::BOLD)
-        )
-        .highlight_symbol("> ");
-
-    f.render_stateful_widget(tasks, chunks[0], &mut app.center_star_edit_list.state);
+        .highlight_symbol("> ")
 }
 
