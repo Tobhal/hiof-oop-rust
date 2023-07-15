@@ -17,9 +17,9 @@ use ratatui::layout::Constraint::Min;
 use crate::{
     app::app::App,
     util::{
-        ui::FieldEditable,
         popup::{centered_rect, draw_input},
-        state::states::{PopupMode, InputMode}
+        state::states::{PopupMode, InputMode},
+        ui::FieldEditable,
     },
 };
 
@@ -66,17 +66,29 @@ pub fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
 
     let (edit_elements, state) = match app.popup_state {
         PopupMode::PlanetSystem => {
-            let ell = get_elements(app.planet_system_edit_list.edit_element.as_ref());
+            let edit_element = app.planet_system_edit_list.edit_element.as_ref().unwrap();
+            let mut ell = get_elements(edit_element);
+
+            ell.push(ListItem::new(
+                Line::from(format!("Center Star: {}",
+                    edit_element.center_star.name
+                ))
+            ));
+
+            edit_element.planets.iter().for_each(|p| ell.push(ListItem::new(
+                Line::from(format!("Planet: {}", p.name.clone()))
+            )));
+
             app.planet_system_edit_list.size = ell.len();
             (ell, &mut app.planet_system_edit_list.state)
         },
         PopupMode::CenterStar => {
-            let ell = get_elements(app.center_star_edit_list.edit_element.as_ref());
+            let ell = get_elements(app.center_star_edit_list.edit_element.as_ref().unwrap());
             app.center_star_edit_list.size = ell.len();
             (ell, &mut app.center_star_edit_list.state)
         },
         PopupMode::Planet => {
-            let ell = get_elements(app.planet_edit_list.edit_element.as_ref());
+            let ell = get_elements(app.planet_edit_list.edit_element.as_ref().unwrap());
             app.planet_edit_list.size = ell.len();
             (ell, &mut app.planet_edit_list.state)
         },
@@ -88,10 +100,10 @@ pub fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     draw_input(f, app, chunks[1]);
 }
 
-fn get_elements<T: FieldEditable>(element: Option<&T>) -> Vec<ListItem<'static>> {
-    element.unwrap().get_field().iter()
+fn get_elements<T: FieldEditable>(element: &T) -> Vec<ListItem<'static>> {
+    element.get_fields().iter()
         .map(|f| ListItem::new(
-            Line::from(format!("{}: {}", f.name, f.value))
+            Line::from(format!("{}: {}", f.0, f.1))
         ))
         .collect()
 }
