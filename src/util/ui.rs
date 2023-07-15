@@ -3,6 +3,7 @@ use std::{
     fmt
 };
 
+pub use field_editable_derive::FieldEditable;
 pub struct NoFieldError(pub usize);
 
 impl fmt::Display for NoFieldError {
@@ -25,6 +26,6 @@ pub struct Field<'f> {
 }
 
 pub trait FieldEditable {
-    fn edit_field(&mut self, index: usize, value: String) -> Result<(), Box<dyn Error>>;
-    fn get_field(& self) -> Vec<Field>;
+    fn get_fields(&self) -> Vec<(&'static str, String)>;
+    fn edit_field(&mut self, field: &'static str, value: String) -> Result<(), Box<dyn Error>>;
 }

@@ -22,7 +22,6 @@ use crate::{
         app::App
     },
     util::{
-        ui::FieldEditable,
         state::states::{InputMode, PopupMode}
     }
 };
