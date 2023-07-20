@@ -39,7 +39,13 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         )
         .split(f.size());
 
-    draw_status_line(f, app, chunks[0]);
+    draw_status_line(f, app, chunks[0], vec![
+        "'Q' = quit",
+        "enter = select/edit",
+        "'esc' = cancel",
+        "'c' = close popup",
+        "'f' = find"
+    ]);
     draw_tabs(f, app, chunks[1]);
 
     match app.tabs.index {
@@ -57,24 +63,27 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 /*
 Draw status line
  */
-fn draw_status_line<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
-    where
-        B: Backend,
+fn generate_elements(elements: Vec<String>) -> Vec<Span<'static>> {
+    let mut spans: Vec<Span> = Vec::new();
+    for (i, element) in elements.iter().enumerate() {
+        spans.push(Span::from(element.clone()));
+        // do not append " | " after last element
+        if i < elements.len() - 1 {
+            spans.push(Span::from(" | "));
+        }
+    }
+    spans
+}
+
+fn draw_status_line<B>(f: &mut Frame<B>, app: &mut App, area: Rect, elements: Vec<&'static str>)
+where
+    B: Backend,
 {
+    let spans = generate_elements(elements.into_iter().map(|e| e.to_string()).collect());
     f.render_widget(
         Paragraph::new(
             vec![
-                Line::from(vec![
-                    Span::from("'q' = quit"),
-                    Span::from(" | "),
-                    Span::from("'enter' = select/edit"),
-                    Span::from(" | "),
-                    Span::from("'esc' = cancel"),
-                    Span::from(" | "),
-                    Span::from("'c' = close popup"),
-                    Span::from(" | "),
-                    Span::from("'f' = find"),
-                ]),
+                Line::from(spans)
             ]
         )
         .wrap(Wrap {
