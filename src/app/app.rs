@@ -54,7 +54,7 @@ impl<'a> App<'a> {
         App {
             title,
             should_quit: false,
-            tabs: TabsState::new(vec!["Planet Systesm"]),
+            tabs: TabsState::new(vec!["Planet Systems"]),
             enhanced_graphics,
 
             planet_systems_list: StatefulList::new_with_items(planet_system_names),
