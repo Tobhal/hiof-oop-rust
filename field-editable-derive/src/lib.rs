@@ -29,7 +29,6 @@ fn type_to_string(ident: Ident, t: Type) -> TokenStream2 {
     }
 }
 
-
 fn impl_field_editable_trait(ast: DeriveInput) -> TokenStream {
     // get struct info
     let ident = ast.ident;

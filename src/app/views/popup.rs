@@ -75,9 +75,11 @@ pub fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
                 ))
             ));
 
-            edit_element.planets.iter().for_each(|p| ell.push(ListItem::new(
-                Line::from(format!("Planet: {}", p.name.clone()))
-            )));
+            edit_element.planets.iter()
+                .for_each(|p| ell.push(ListItem::new(
+                    Line::from(format!("Planet: {}", p.name))
+                )
+            ));
 
             app.planet_system_edit_list.size = ell.len();
             (ell, &mut app.planet_system_edit_list.state)
