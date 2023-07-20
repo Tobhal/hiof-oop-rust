@@ -1,0 +1,11 @@
+[package]
+name = "field-editable-derive"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+quote = "1.0.29"
+syn = "2.0.26"
+
+[lib]
+proc-macro = true

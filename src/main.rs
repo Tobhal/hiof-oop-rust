@@ -4,14 +4,16 @@ mod planet_system;
 mod app;
 mod util;
 
-use std::{
-    error::Error,
-    time::Duration
-};
-
-use crate::{
-    planet_system::planet_system::PlanetSystem,
-    app::termion::run
+use {
+    std::{
+        error::Error,
+        time::Duration
+    },
+    crate::{
+        planet_system::planet_system::PlanetSystem,
+        app::termion::run,
+        util::ui::FieldEditable,
+    }
 };
 
 fn main() -> Result<(), Box<dyn Error>> {

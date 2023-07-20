@@ -18,7 +18,6 @@ use crate::{
         planet::Planet,
     },
     util::{
-        ui::FieldEditable,
         state::{
             list::StatefulList,
             tabs::TabsState,
@@ -26,6 +25,7 @@ use crate::{
         }
     }
 };
+use crate::util::ui::FieldEditable;
 
 pub struct App<'a> {
     pub title: &'a str,
@@ -257,8 +257,14 @@ impl<'a> App<'a> {
                         let planet_system_edit_index = self.planet_system_edit_list.state.selected().unwrap_or_default() - 2;
                         let planet_edit_index = self.planet_edit_list.state.selected().unwrap_or_default();
 
-                        match self.planet_systems[planet_system_index].planets[planet_system_edit_index].edit_field(planet_edit_index, message.clone()) {
-                            Ok(_) => {}
+                        let planet_fields = self.planet_systems[planet_system_index].planets[planet_system_edit_index].get_fields();
+
+                        match self.planet_systems[planet_system_index].planets[planet_system_edit_index].edit_field(planet_fields[planet_edit_index].0, message.to_string()) {
+                            Ok(_) => {
+                                // Ignore error, becuase this is chekced before.
+                                self.planet_edit_list.edit_element.as_mut().unwrap().edit_field(planet_fields[planet_edit_index].0, message.to_string())?;
+                                self.planet_system_edit_list.edit_element.as_mut().unwrap().planets[planet_system_edit_index].edit_field(planet_fields[planet_edit_index].0, message.to_string())?
+                            }
                             Err(e) => {
                                 println!("{:#?}", e.to_string());
                                 sleep(Duration::from_secs(5));
@@ -268,7 +274,6 @@ impl<'a> App<'a> {
                                 return Ok(())
                             }
                         };
-                        self.planet_edit_list.edit_element.as_mut().unwrap().edit_field(planet_edit_index,message.clone())?;
 
                         self.input_mode = InputMode::Normal;
                     },
@@ -283,8 +288,14 @@ impl<'a> App<'a> {
                         let planet_system_index = self.planet_systems_list.state.selected().unwrap_or_default();
                         let center_star_edit_index = self.center_star_edit_list.state.selected().unwrap_or_default();
 
-                        match self.planet_systems[planet_system_index].center_star.edit_field(center_star_edit_index, message.clone()) {
-                            Ok(_) => {}
+                        let center_star_fields = self.planet_systems[planet_system_index].center_star.get_fields();
+
+                        match self.planet_systems[planet_system_index].center_star.edit_field(center_star_fields[center_star_edit_index].0, message.to_string()) {
+                            Ok(_) => {
+                                // Ignore error, becuase this is chekced before.
+                                self.center_star_edit_list.edit_element.as_mut().unwrap().edit_field(center_star_fields[center_star_edit_index].0, message.to_string())?;
+                                self.planet_system_edit_list.edit_element.as_mut().unwrap().center_star.edit_field(center_star_fields[center_star_edit_index].0, message.to_string())?;
+                            }
                             Err(e) => {
                                 println!("{:#?}", e.to_string());
                                 sleep(Duration::from_secs(5));
@@ -294,7 +305,6 @@ impl<'a> App<'a> {
                                 return Ok(())
                             }
                         };
-                        self.center_star_edit_list.edit_element.as_mut().unwrap().edit_field(center_star_edit_index, message.clone())?;
 
                         self.input_mode = InputMode::Normal;
                     },
