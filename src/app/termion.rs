@@ -27,7 +27,6 @@ pub fn run(tick_rate: Duration, enhanced_graphics: bool, planet_system: Vec<Plan
     let backend = TermionBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-
     let planet_system_names: Vec<String> = planet_system.iter().map(|p| p.name.clone()).collect();
 
     // create app and run it
