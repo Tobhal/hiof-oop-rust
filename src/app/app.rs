@@ -44,8 +44,6 @@ pub struct App<'a> {
     pub popup_state: PopupMode,
 
     pub edit_list: StatefulList<PlanetSystem>,
-    pub planet_edit_list: StatefulList<Planet>,
-    pub center_star_edit_list: StatefulList<CenterStar>,
 
     pub find_list: StatefulList<PlanetSystem>
 }
@@ -68,18 +66,6 @@ impl<'a> App<'a> {
             popup_state: PopupMode::Hide,
 
             edit_list: StatefulList::new_with_items(PlanetSystem::default()
-                .get_fields()
-                .iter()
-                .map(|f| format!("{}: {}", f.0, f.1))
-                .collect()
-            ),
-            planet_edit_list: StatefulList::new_with_items(Planet::default()
-                .get_fields()
-                .iter()
-                .map(|f| format!("{}: {}", f.0, f.1))
-                .collect()
-            ),
-            center_star_edit_list: StatefulList::new_with_items(CenterStar::default()
                 .get_fields()
                 .iter()
                 .map(|f| format!("{}: {}", f.0, f.1))
@@ -170,11 +156,9 @@ impl<'a> App<'a> {
                             0 => self.input_mode = InputMode::Editing,
                             1 => {
                                 self.popup_state = PopupMode::CenterStar;
-                                self.center_star_edit_list.edit_element = Some(self.planet_systems[planet_system_index].center_star.clone())
                             }
                             _ => {
                                 self.popup_state = PopupMode::Planet;
-                                self.planet_edit_list.edit_element = Some(self.planet_systems[planet_system_index].planets[edit_index-2].clone());
                                 self.edit_list.size = edit_index-2;
                             }
                         }
@@ -187,7 +171,6 @@ impl<'a> App<'a> {
                     'q' => self.should_quit = true,
                     'c' => {
                         self.planet_systems_list.state.select(Some(0));
-                        self.planet_edit_list.state.select(Some(0));
                         self.popup_state = PopupMode::Hide;
                     },
                     '\n' => {
@@ -201,7 +184,6 @@ impl<'a> App<'a> {
                     'q' => self.should_quit = true,
                     'c' => {
                         self.planet_systems_list.state.select(Some(0));
-                        self.center_star_edit_list.state.select(Some(0));
                         self.popup_state = PopupMode::Hide;
                     },
                     '\n' => {
@@ -259,15 +241,14 @@ impl<'a> App<'a> {
                         let message: String = self.input.drain(..).collect();
 
                         let planet_system_index = self.planet_systems_list.state.selected().unwrap_or_default();
-                        let planet_system_edit_index = self.edit_list.state.selected().unwrap_or_default() - 2;
-                        let planet_edit_index = self.planet_edit_list.state.selected().unwrap_or_default();
+                        let planet_system_edit_index = self.edit_list.size;
+                        let planet_edit_index = self.edit_list.state.selected().unwrap_or_default();
 
                         let planet_fields = self.planet_systems[planet_system_index].planets[planet_system_edit_index].get_fields();
 
                         match self.planet_systems[planet_system_index].planets[planet_system_edit_index].edit_field(planet_fields[planet_edit_index].0, message.to_string()) {
                             Ok(_) => {
                                 // Ignore error, becuase this is chekced before.
-                                self.planet_edit_list.edit_element.as_mut().unwrap().edit_field(planet_fields[planet_edit_index].0, message.to_string())?;
                                 self.edit_list.edit_element.as_mut().unwrap().planets[planet_system_edit_index].edit_field(planet_fields[planet_edit_index].0, message.to_string())?
                             }
                             Err(e) => {
@@ -291,14 +272,13 @@ impl<'a> App<'a> {
                         let message: String = self.input.drain(..).collect();
 
                         let planet_system_index = self.planet_systems_list.state.selected().unwrap_or_default();
-                        let center_star_edit_index = self.center_star_edit_list.state.selected().unwrap_or_default();
+                        let center_star_edit_index = self.edit_list.state.selected().unwrap_or_default();
 
                         let center_star_fields = self.planet_systems[planet_system_index].center_star.get_fields();
 
                         match self.planet_systems[planet_system_index].center_star.edit_field(center_star_fields[center_star_edit_index].0, message.to_string()) {
                             Ok(_) => {
                                 // Ignore error, becuase this is chekced before.
-                                self.center_star_edit_list.edit_element.as_mut().unwrap().edit_field(center_star_fields[center_star_edit_index].0, message.to_string())?;
                                 self.edit_list.edit_element.as_mut().unwrap().center_star.edit_field(center_star_fields[center_star_edit_index].0, message.to_string())?;
                             }
                             Err(e) => {
