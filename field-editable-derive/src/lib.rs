@@ -36,8 +36,14 @@ fn impl_field_editable_trait(ast: DeriveInput) -> TokenStream {
     // get field idents
     let (field_idents, field_types): (Vec<Ident>, Vec<Type>) = match ast.data {
         syn::Data::Struct(data) => (
-            data.fields.clone().into_iter().filter(|f| filter_values(f.clone())).filter_map(|f| f.ident).collect(),
-            data.fields.into_iter().filter(|f| filter_values(f.clone())).map(|f| f.ty).collect()
+            data.fields.clone().into_iter()
+                .filter(|f| filter_values(f.clone()))
+                .filter_map(|f| f.ident)
+                .collect(),
+            data.fields.into_iter()
+                .filter(|f| filter_values(f.clone()))
+                .map(|f| f.ty)
+                .collect()
         ),
         syn::Data::Union(_) => panic!("field editable not supported for union"),
         syn::Data::Enum(_) => panic!("field editable not supported for enum")
