@@ -31,14 +31,14 @@ pub fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
     let system_index = app.planet_systems_list.state.selected().unwrap_or_default();
 
     let edit_path: String = match app.popup_state {
-        PopupMode::PlanetSystem => app.planet_system_edit_list.edit_element.as_ref().unwrap().name.clone(),
+        PopupMode::PlanetSystem => app.edit_list.edit_element.as_ref().unwrap().name.clone(),
         PopupMode::CenterStar => format!("{} -> {}",
-                                         app.planet_system_edit_list.edit_element.as_ref().unwrap().name.clone(),
-                                         app.center_star_edit_list.edit_element.as_ref().unwrap().name.clone()
+                                         app.edit_list.edit_element.as_ref().unwrap().name.clone(),
+                                         app.edit_list.edit_element.as_ref().unwrap().center_star.name.clone()
         ),
         PopupMode::Planet => format!("{} -> {}",
-                                     app.planet_system_edit_list.edit_element.as_ref().unwrap().name.clone(),
-                                     app.planet_edit_list.edit_element.as_ref().unwrap().name.clone()
+                                     app.edit_list.edit_element.as_ref().unwrap().name.clone(),
+                                     app.edit_list.edit_element.as_ref().unwrap().planets[app.edit_list.size].name.clone()
         ),
         _ => String::new(),
     };
@@ -65,64 +65,86 @@ pub fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         )
         .split(popup_area);
 
-    /*
-    TODO: Try to rewrite to only use one edit_element list, not 3
-     */
-    let (edit_elements, state) = match app.popup_state {
+    let edit_elements: Vec<ListItem>= match app.popup_state {
         PopupMode::PlanetSystem => {
-            let edit_element = app.planet_system_edit_list.edit_element.as_ref().unwrap();
+            let edit_element = app.edit_list.edit_element.as_ref().unwrap();
 
-            let mut ell_string: Vec<String> = edit_element.get_fields().iter().map(|f| format!("{}: {}", f.0, f.1)).collect();
-            ell_string.push(format!("Center star: {}", edit_element.center_star.get_fields()[0].1));
-            app.planet_system_edit_list.edit_element.as_ref().unwrap().planets.iter().for_each(|p| ell_string.push(
-                format!("Planet: {}", p.get_fields()[0].1)
-            ));
-
-            app.planet_system_edit_list.items = ell_string.clone();
-
-            let ell: Vec<ListItem<'static>> = ell_string.iter().map(|s| ListItem::new(
-                Line::from(s.to_string())
-            ))
+            let mut ell_string: Vec<String> = edit_element
+                .get_fields()
+                .iter()
+                .map(|f| format!("{}: {}", f.0, f.1))
                 .collect();
 
-            (ell, &mut app.planet_system_edit_list.state)
+            ell_string.push(format!("Center star: {}", edit_element.center_star.get_fields()[0].1));
+
+            app.edit_list.edit_element
+                .as_ref()
+                .unwrap()
+                .planets
+                .iter()
+                .for_each(|p| ell_string.push(
+                    format!("Planet: {}", p.get_fields()[0].1)
+                ));
+
+            app.edit_list.items = ell_string.clone();
+
+            let ell: Vec<ListItem<'static>> = ell_string
+                .iter()
+                .map(|s| ListItem::new(
+                    Line::from(s.to_string())
+                ))
+                .collect();
+
+            ell
         },
         PopupMode::CenterStar => {
-            let ell_string: Vec<String> = app.center_star_edit_list.edit_element.as_ref().unwrap().get_fields().iter().map(|f| format!("{}: {}", f.0, f.1)).collect();
-            app.center_star_edit_list.items = ell_string.clone();
-
-            let ell: Vec<ListItem<'static>> = ell_string.iter().map(|s| ListItem::new(
-                Line::from(s.to_string())
-            ))
+            let ell_string: Vec<String> = app.edit_list.edit_element
+                .as_ref()
+                .unwrap()
+                .center_star
+                .get_fields()
+                .iter()
+                .map(|f| format!("{}: {}", f.0, f.1))
                 .collect();
 
-            (ell, &mut app.center_star_edit_list.state)
+            app.edit_list.items = ell_string.clone();
+
+            let ell: Vec<ListItem<'static>> = ell_string
+                .iter()
+                .map(|s| ListItem::new(
+                    Line::from(s.to_string())
+                ))
+                .collect();
+
+            ell
         },
         PopupMode::Planet => {
-            let ell_string: Vec<String> = app.planet_edit_list.edit_element.as_ref().unwrap().get_fields().iter().map(|f| format!("{}: {}", f.0, f.1)).collect();
-            app.planet_edit_list.items = ell_string.clone();
-
-            let ell: Vec<ListItem<'static>> = ell_string.iter().map(|s| ListItem::new(
-                Line::from(s.to_string())
-            ))
+            let ell_string: Vec<String> = app.edit_list.edit_element
+                .as_ref()
+                .unwrap()
+                .planets[app.edit_list.size]
+                .get_fields()
+                .iter()
+                .map(|f| format!("{}: {}", f.0, f.1))
                 .collect();
 
-            (ell, &mut app.planet_edit_list.state)
+            app.edit_list.items = ell_string.clone();
+
+            let ell: Vec<ListItem<'static>> = ell_string
+                .iter()
+                .map(|s| ListItem::new(
+                    Line::from(s.to_string())
+                ))
+                .collect();
+
+            ell
         },
-        _ => (vec![], &mut app.planet_system_edit_list.state)
+        _ => vec![]
     };
 
-    f.render_stateful_widget(get_tasks(edit_elements), chunks[0], state);
+    f.render_stateful_widget(get_tasks(edit_elements), chunks[0], &mut app.edit_list.state);
 
     draw_input(f, app, chunks[1]);
-}
-
-fn get_elements<T: FieldEditable>(element: &T) -> Vec<ListItem<'static>> {
-    element.get_fields().iter()
-        .map(|f| ListItem::new(
-            Line::from(format!("{}: {}", f.0, f.1))
-        ))
-        .collect()
 }
 
 fn get_tasks(tasks: Vec<ListItem>) -> List {
