@@ -85,7 +85,7 @@ impl<'a> App<'a> {
                 self.edit_list.previous();
             }
             PopupMode::Find => {
-                self.find_list.previous_size();
+                self.find_list.previous();
             }
         }
 
@@ -101,7 +101,7 @@ impl<'a> App<'a> {
                 self.edit_list.next();
             }
             PopupMode::Find => {
-                self.find_list.next_size();
+                self.find_list.next();
             }
         }
 
@@ -207,7 +207,6 @@ impl<'a> App<'a> {
                     '\n' => {
                         // Push edited line to the current editing line
                         let message: String = self.input.drain(..).collect();
-                        // self.messages.push(self.input.drain(..).collect());
 
                         let system_index = self.planet_systems_list.state.selected().unwrap_or_default();
                         let edit_index = self.edit_list.state.selected().unwrap_or_default();
@@ -240,16 +239,16 @@ impl<'a> App<'a> {
                     '\n' => {
                         let message: String = self.input.drain(..).collect();
 
-                        let planet_system_index = self.planet_systems_list.state.selected().unwrap_or_default();
                         let planet_system_edit_index = self.edit_list.size;
-                        let planet_edit_index = self.edit_list.state.selected().unwrap_or_default();
 
-                        let planet_fields = self.planet_systems[planet_system_index].planets[planet_system_edit_index].get_fields();
+                        let planet_system = &mut self.planet_systems[self.planet_systems_list.state.selected().unwrap_or_default()];
 
-                        match self.planet_systems[planet_system_index].planets[planet_system_edit_index].edit_field(planet_fields[planet_edit_index].0, message.to_string()) {
+                        let planet_field_name = planet_system.planets[planet_system_edit_index].get_fields()[self.edit_list.state.selected().unwrap_or_default()].0;
+
+                        match planet_system.planets[planet_system_edit_index].edit_field(planet_field_name, message.to_string()) {
                             Ok(_) => {
                                 // Ignore error, becuase this is chekced before.
-                                self.edit_list.edit_element.as_mut().unwrap().planets[planet_system_edit_index].edit_field(planet_fields[planet_edit_index].0, message.to_string())?
+                                self.edit_list.edit_element.as_mut().unwrap().planets[planet_system_edit_index].edit_field(planet_field_name, message.to_string())?
                             }
                             Err(e) => {
                                 println!("{:#?}", e.to_string());
@@ -271,15 +270,14 @@ impl<'a> App<'a> {
                     '\n' => {
                         let message: String = self.input.drain(..).collect();
 
-                        let planet_system_index = self.planet_systems_list.state.selected().unwrap_or_default();
-                        let center_star_edit_index = self.edit_list.state.selected().unwrap_or_default();
+                        let planet_system = &mut self.planet_systems[self.planet_systems_list.state.selected().unwrap_or_default()];
 
-                        let center_star_fields = self.planet_systems[planet_system_index].center_star.get_fields();
+                        let center_star_field_name = planet_system.center_star.get_fields()[self.edit_list.state.selected().unwrap_or_default()].0;
 
-                        match self.planet_systems[planet_system_index].center_star.edit_field(center_star_fields[center_star_edit_index].0, message.to_string()) {
+                        match planet_system.center_star.edit_field(center_star_field_name, message.to_string()) {
                             Ok(_) => {
                                 // Ignore error, becuase this is chekced before.
-                                self.edit_list.edit_element.as_mut().unwrap().center_star.edit_field(center_star_fields[center_star_edit_index].0, message.to_string())?;
+                                self.edit_list.edit_element.as_mut().unwrap().center_star.edit_field(center_star_field_name, message.to_string())?;
                             }
                             Err(e) => {
                                 println!("{:#?}", e.to_string());
