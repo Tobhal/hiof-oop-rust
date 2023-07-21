@@ -27,31 +27,11 @@ impl<E> StatefulList<E> {
         }));
     }
 
-    pub fn next_size(&mut self) {
-        self.state.select(Some(match self.state.selected() {
-            Some(i) => (i + 1) % self.size,
-            None => 0,
-        }));
-    }
-
     pub fn previous(&mut self) {
         self.state.select(Some(match self.state.selected() {
             Some(i) => {
                 if i == 0 {
                     self.items.len() - 1
-                } else {
-                    i - 1
-                }
-            }
-            None => 0,
-        }));
-    }
-
-    pub fn previous_size(&mut self) {
-        self.state.select(Some(match self.state.selected() {
-            Some(i) => {
-                if i == 0 {
-                    self.size - 1
                 } else {
                     i - 1
                 }

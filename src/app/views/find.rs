@@ -56,7 +56,7 @@ pub fn draw_find_planet_system_list<B>(f: &mut Frame<B>, app: &mut App, area: Re
         .map(|ps| ps.name.clone())
         .collect();
 
-    app.find_list.size = planet_system_names.len();
+    app.find_list.items = planet_system_names.clone();
 
     f.render_stateful_widget(
         List::new(planet_system_names
