@@ -9,6 +9,7 @@ use std::{
     error::Error,
     thread::sleep,
 };
+use std::fmt::format;
 use termion::event::Key;
 
 use crate::{
@@ -33,7 +34,7 @@ pub struct App<'a> {
     pub tabs: TabsState<'a>,
     pub enhanced_graphics: bool,
 
-    pub planet_systems_list: StatefulList<'a, PlanetSystem>,
+    pub planet_systems_list: StatefulList<PlanetSystem>,
     pub planet_systems: Vec<PlanetSystem>,
 
     pub input_mode: InputMode,
@@ -42,11 +43,11 @@ pub struct App<'a> {
 
     pub popup_state: PopupMode,
 
-    pub planet_system_edit_list: StatefulList<'a, PlanetSystem>,
-    pub planet_edit_list: StatefulList<'a, Planet>,
-    pub center_star_edit_list: StatefulList<'a, CenterStar>,
+    pub planet_system_edit_list: StatefulList<PlanetSystem>,
+    pub planet_edit_list: StatefulList<Planet>,
+    pub center_star_edit_list: StatefulList<CenterStar>,
 
-    pub find_list: StatefulList<'a, PlanetSystem>
+    pub find_list: StatefulList<PlanetSystem>
 }
 
 impl<'a> App<'a> {
@@ -57,7 +58,7 @@ impl<'a> App<'a> {
             tabs: TabsState::new(vec!["Planet Systems"]),
             enhanced_graphics,
 
-            planet_systems_list: StatefulList::new_with_items(planet_system_names),
+            planet_systems_list: StatefulList::new_with_items(planet_system_names.to_vec()),
             planet_systems,
 
             input_mode: InputMode::Normal,
@@ -66,11 +67,26 @@ impl<'a> App<'a> {
 
             popup_state: PopupMode::Hide,
 
-            planet_system_edit_list: StatefulList::new_with_items(planet_system_names),
-            planet_edit_list: StatefulList::new_with_items(planet_system_names),
-            center_star_edit_list: StatefulList::new_with_items(planet_system_names),
+            planet_system_edit_list: StatefulList::new_with_items(PlanetSystem::default()
+                .get_fields()
+                .iter()
+                .map(|f| format!("{}: {}", f.0, f.1))
+                .collect()
+            ),
+            planet_edit_list: StatefulList::new_with_items(Planet::default()
+                .get_fields()
+                .iter()
+                .map(|f| format!("{}: {}", f.0, f.1))
+                .collect()
+            ),
+            center_star_edit_list: StatefulList::new_with_items(CenterStar::default()
+                .get_fields()
+                .iter()
+                .map(|f| format!("{}: {}", f.0, f.1))
+                .collect()
+            ),
 
-            find_list: StatefulList::new_with_items(planet_system_names)
+            find_list: StatefulList::new_with_items(planet_system_names.to_vec())
         }
     }
 
@@ -80,13 +96,13 @@ impl<'a> App<'a> {
                 self.planet_systems_list.previous();
             }
             PopupMode::PlanetSystem => {
-                self.planet_system_edit_list.previous_size();
+                self.planet_system_edit_list.previous();
             }
             PopupMode::Planet => {
-                self.planet_edit_list.previous_size();
+                self.planet_edit_list.previous();
             }
             PopupMode::CenterStar => {
-                self.center_star_edit_list.previous_size();
+                self.center_star_edit_list.previous();
             }
             PopupMode::Find => {
                 self.find_list.previous_size();
@@ -102,13 +118,13 @@ impl<'a> App<'a> {
                 self.planet_systems_list.next();
             }
             PopupMode::PlanetSystem => {
-                self.planet_system_edit_list.next_size();
+                self.planet_system_edit_list.next();
             }
             PopupMode::Planet => {
-                self.planet_edit_list.next_size();
+                self.planet_edit_list.next();
             }
             PopupMode::CenterStar => {
-                self.center_star_edit_list.next_size();
+                self.center_star_edit_list.next();
             }
             PopupMode::Find => {
                 self.find_list.next_size();

@@ -1,14 +1,14 @@
 use ratatui::widgets::ListState;
 
-pub struct StatefulList<'l, E> {
+pub struct StatefulList<E> {
     pub state: ListState,
-    pub items: &'l Vec<String>,
+    pub items: Vec<String>,
     pub size: usize,
     pub edit_element: Option<E>
 }
 
-impl<'l, E> StatefulList<'l, E> {
-    pub fn new_with_items(items: &Vec<String>) -> StatefulList<E> {
+impl<E> StatefulList<E> {
+    pub fn new_with_items(items: Vec<String>) -> StatefulList<E> {
         let mut state = ListState::default();
         state.select(Some(0));
 

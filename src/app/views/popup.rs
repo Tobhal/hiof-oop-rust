@@ -3,6 +3,7 @@ use std::{
     thread::sleep,
     time::Duration
 };
+use std::fmt::format;
 
 use ratatui::{
     backend::Backend,
@@ -64,34 +65,48 @@ pub fn draw_popup<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         )
         .split(popup_area);
 
+    /*
+    TODO: Try to rewrite to only use one edit_element list, not 3
+     */
     let (edit_elements, state) = match app.popup_state {
         PopupMode::PlanetSystem => {
             let edit_element = app.planet_system_edit_list.edit_element.as_ref().unwrap();
-            let mut ell = get_elements(edit_element);
 
-            ell.push(ListItem::new(
-                Line::from(format!("Center Star: {}",
-                    edit_element.center_star.name
-                ))
+            let mut ell_string: Vec<String> = edit_element.get_fields().iter().map(|f| format!("{}: {}", f.0, f.1)).collect();
+            ell_string.push(format!("Center star: {}", edit_element.center_star.get_fields()[0].1));
+            app.planet_system_edit_list.edit_element.as_ref().unwrap().planets.iter().for_each(|p| ell_string.push(
+                format!("Planet: {}", p.get_fields()[0].1)
             ));
 
-            edit_element.planets.iter()
-                .for_each(|p| ell.push(ListItem::new(
-                    Line::from(format!("Planet: {}", p.name))
-                )
-            ));
+            app.planet_system_edit_list.items = ell_string.clone();
 
-            app.planet_system_edit_list.size = ell.len();
+            let ell: Vec<ListItem<'static>> = ell_string.iter().map(|s| ListItem::new(
+                Line::from(s.to_string())
+            ))
+                .collect();
+
             (ell, &mut app.planet_system_edit_list.state)
         },
         PopupMode::CenterStar => {
-            let ell = get_elements(app.center_star_edit_list.edit_element.as_ref().unwrap());
-            app.center_star_edit_list.size = ell.len();
+            let ell_string: Vec<String> = app.center_star_edit_list.edit_element.as_ref().unwrap().get_fields().iter().map(|f| format!("{}: {}", f.0, f.1)).collect();
+            app.center_star_edit_list.items = ell_string.clone();
+
+            let ell: Vec<ListItem<'static>> = ell_string.iter().map(|s| ListItem::new(
+                Line::from(s.to_string())
+            ))
+                .collect();
+
             (ell, &mut app.center_star_edit_list.state)
         },
         PopupMode::Planet => {
-            let ell = get_elements(app.planet_edit_list.edit_element.as_ref().unwrap());
-            app.planet_edit_list.size = ell.len();
+            let ell_string: Vec<String> = app.planet_edit_list.edit_element.as_ref().unwrap().get_fields().iter().map(|f| format!("{}: {}", f.0, f.1)).collect();
+            app.planet_edit_list.items = ell_string.clone();
+
+            let ell: Vec<ListItem<'static>> = ell_string.iter().map(|s| ListItem::new(
+                Line::from(s.to_string())
+            ))
+                .collect();
+
             (ell, &mut app.planet_edit_list.state)
         },
         _ => (vec![], &mut app.planet_system_edit_list.state)
