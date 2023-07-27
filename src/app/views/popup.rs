@@ -18,9 +18,8 @@ use ratatui::layout::Constraint::Min;
 use crate::{
     app::app::App,
     util::{
-        popup::{centered_rect, draw_input},
         state::states::{PopupMode, InputMode},
-        ui::FieldEditable,
+        ui::{FieldEditable, centered_rect, draw_input},
     },
 };
 

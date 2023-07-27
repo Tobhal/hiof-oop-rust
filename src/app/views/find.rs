@@ -13,7 +13,7 @@ use crate::{
         views::popup::draw_popup,
     },
     util::{
-        popup::{centered_rect, draw_input},
+        ui::{centered_rect, draw_input},
         state::states::{InputMode, PopupMode}
     }
 };

@@ -17,13 +17,13 @@ use crate::{
         views::{
             popup::draw_popup,
             tab1::draw_first_tab,
+            save::draw_save_tab,
+            load::draw_load_tab,
             find::draw_find_popup
         },
         app::App
     },
-    util::{
-        state::states::{InputMode, PopupMode}
-    }
+    util::state::states::{InputMode, PopupMode}
 };
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
@@ -45,10 +45,19 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         "'c' = close popup",
         "'f' = find"
     ]);
+
     draw_tabs(f, app, chunks[1]);
+
+    app.tabs.titles = vec![
+        "Planet Systems",
+        "Save",
+        "Load"
+    ];
 
     match app.tabs.index {
         0 => draw_first_tab(f, app, chunks[2]),
+        1 => draw_save_tab(f, app, chunks[2]),
+        2 => draw_load_tab(f, app, chunks[2]),
         _ => {}
     };
 
@@ -112,7 +121,7 @@ fn draw_tabs<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
             .borders(Borders::ALL)
             .title(app.title))
         .highlight_style(Style::default()
-            .add_modifier(Modifier::BOLD))
+            .add_modifier(Modifier::BOLD | Modifier::UNDERLINED))
         .select(app.tabs.index),
         area
     );

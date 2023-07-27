@@ -26,13 +26,6 @@ pub fn draw_first_tab<B>(f: &mut Frame<B>, app: &mut App, area: Rect)
         )
         .split(area);
 
-    let block = Block::default()
-        .title("Content")
-        .borders(Borders::ALL)
-        .style(Style::default());
-
-    f.render_widget(block, chunks[1]);
-
     draw_list(f, app, chunks[0]);
     draw_planet_system_info(f, app, chunks[1], index);
 }
