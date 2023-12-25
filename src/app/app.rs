@@ -120,6 +120,7 @@ impl<'a> App<'a> {
         Ok(())
     }
 
+
     pub fn on_key(&mut self, c: char) -> Result<(), Box<dyn Error>> {
         match (self.input_mode.clone(), self.popup_state.clone()) {
             (InputMode::Normal, PopupMode::Hide) => {

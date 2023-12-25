@@ -19,7 +19,7 @@ use {
 fn main() -> Result<(), Box<dyn Error>> {
     let mut planet_systems = PlanetSystem::new_systems_from_file("files/csv/planets_100.csv".to_string());
     planet_systems.sort_by_cached_key(|ps| ps.name.clone());
-    
+
     run(Duration::from_millis(250), true, planet_systems)?;
 
     Ok(())
